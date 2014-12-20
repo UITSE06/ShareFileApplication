@@ -23,7 +23,7 @@ public class ConnectDatatbase {
 	public Connection CreateConnect() throws SQLException{
 			Driver driver = new org.gjt.mm.mysql.Driver();
 			DriverManager.registerDriver(driver);
-			String conString = "jbdc:mysql://localhost:8080/db_sharefile";
+			String conString = "jdbc:mysql://localhost/db_sharefile";
 			Properties info = new Properties();
 			info.setProperty("characterEncoding", "utf8");
 			info.setProperty("user", "root");
