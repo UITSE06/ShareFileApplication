@@ -3,13 +3,20 @@ package appServerHandling;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import DataTranferObject.FileDetailDTO;
+//import DataTranferObject.FileDetailDTO;
 
 public class FileManagementServicesImpl extends UnicastRemoteObject implements FileManagementServices {
 
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private ConnectDatatbase connectDB = new ConnectDatatbase();
+
 	public FileManagementServicesImpl() throws RemoteException {
 		super();
 		// TODO Auto-generated constructor stub
@@ -25,21 +32,20 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements F
 		return "";
 	}
 	
-	public int InsertFileInfo(String userName, FileDetailDTO fileDetail){
-		ConnectDatatbase connect =  new ConnectDatatbase();
-		String sqlInsertFile = String.format("INSERT INTO filedetail (user_id, state_id, filename, urlfile, rolefile, dateupload, size, checksum) "
-          +"VALUES (?,?,?,?,?,?,?,?)");
+	/*public int InsertFileInfo(String userName, FileDetailDTO fileDetail){
+		String sqlInsertFile = "INSERT INTO filedetail (user_id, state_id, filename, "
+				+ "urlfile, rolefile, dateupload, size, checksum) VALUES (?,?,?,?,?,?,?,?)";
 		
 		try {
-			PreparedStatement statement = connect.GetPrepareStatement(sqlInsertFile);
+			PreparedStatement statement = connectDB.GetPrepareStatement(sqlInsertFile);
 			statement.setInt(1, fileDetail.getFile_id());
 			statement.setInt(2, fileDetail.getState_id());
-			statement.setObject(3, fileDetail.getFileName());
-			statement.setObject(4, fileDetail.getUrlFile());
-			statement.setObject(5, fileDetail.getRoleFile());
+			statement.setString(3, fileDetail.getFileName());
+			statement.setString(4, fileDetail.getUrlFile());
+			statement.setString(5, fileDetail.getRoleFile());
 			statement.setObject(6, fileDetail.getDateUpload());
-			statement.setObject(7, fileDetail.getSize());
-			statement.setObject(8, fileDetail.getCheckSum());
+			statement.setInt(7, fileDetail.getSize());
+			statement.setString(8, fileDetail.getCheckSum());
 			statement.execute();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -50,6 +56,29 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements F
 		}
 		
 		return 0;
+	}*/
+
+	public String Login(String userName, String passWord)
+			throws RemoteException {
+		try {
+			PreparedStatement statement =
+					connectDB.GetPrepareStatement("SELECT `username`, `password` FROM `user` WHERE `username` = ?");
+			
+			statement.setString(1, userName);			
+			ResultSet rs = statement.executeQuery();
+			if(rs.next()){
+				if(passWord.equals(rs.getString("password"))){
+					return rs.getString("username");
+				}
+			} else {
+				return null;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	

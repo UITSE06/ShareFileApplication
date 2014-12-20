@@ -10,20 +10,19 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 
-//import com.mysql.jdbc.Driver;
 
 public class ConnectDatatbase {
 	
-	Connection connection = null;          	// Khoi tao connector
-	Statement statement = null;         	// Khoi tao statement thuc thi cau lenh sql
-	CallableStatement callableSta = null; 	// Khoi tao callableStatement
+	Connection connection = null;          
+	Statement statement = null;         	
+	CallableStatement callableSta = null; 	
 	PreparedStatement preState = null;
-	ResultSet result = null;            	// Khoi tao ResultSet de chua du lieu sau khi thuc thi cau lenh sql
+	ResultSet result = null;            
 	
 	public Connection CreateConnect() throws SQLException{
 			Driver driver = new org.gjt.mm.mysql.Driver();
 			DriverManager.registerDriver(driver);
-			String conString = "jdbc:mysql://localhost/db_sharefile";
+			String conString = "jdbc:mysql://localhost:3306/db_sharefile";
 			Properties info = new Properties();
 			info.setProperty("characterEncoding", "utf8");
 			info.setProperty("user", "root");
@@ -32,28 +31,26 @@ public class ConnectDatatbase {
 			return connection;
 	}
 	
-	// Tao Statement de thuc thi cau Query
+	// Create statement to execute query
 	protected Statement GetStatement() throws SQLException, Exception {
-        // Kiem tra statement co null hoac da bi dong hay chua
+        // Check statement
         if (this.statement == null ? true : this.statement.isClosed()) {
             this.statement = this.CreateConnect().createStatement();
         }
-        // Tra Statement ra ngoai.
         return this.statement;
     }
 
 
-    // Tao Prepare Statement de thuc thi cau lenh SQL voi tham so
+    // Create Prepared Statement to execute query with parameter
     protected PreparedStatement GetPrepareStatement(String sql) throws SQLException, Exception {
-        // Kiem tra statement co null hoac da bi dong hay chua
+    	// Check statement
         if (this.preState == null ? true : this.preState.isClosed()) {
             this.preState = this.CreateConnect().prepareStatement(sql);
         }
-        // Tra Statement ra ngoai.
         return this.preState;
     }
 
-    // Ham thuc thi cau lenh Select de lay du lieu
+    // Execute query to get a result
     public ResultSet ExcuteQuery(String Query) throws Exception {
         try {
             this.result = GetStatement().executeQuery(Query);
@@ -63,23 +60,22 @@ public class ConnectDatatbase {
         return this.result;
     }
     
- // Ham thuc thi cac cau lenh Insert, Update, Delete binh thuong
+    // Execute Insert, Update, Delete
     public int ExcuteUpdate(String Query) throws Exception {
         int res = Integer.MIN_VALUE;
         try {
-            //Thuc thi cau lenh
             res = GetStatement().executeUpdate(Query);
         } catch (Exception e) {
             throw new Exception("Error: " + e.getMessage());
-        } // Sau khi thuc hien cau lenh se tien hanh dong ket noi.
-        finally {
+        } finally {
+        	//Close connection
            this.Close();
         }
         return res;
     }
 
     public void Close() throws SQLException {
-        // Kiem tra ResultSet
+        // Check ResultSet
         if (this.result != null && this.result.isClosed()) {
             this.result.close();
             this.result = null;
