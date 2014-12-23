@@ -6,7 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-//import DataTranferObject.FileDetailDTO;
+import DataTranferObject.FileDTO;
 
 public class FileManagementServicesImpl extends UnicastRemoteObject implements FileManagementServices {
 
@@ -32,31 +32,38 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements F
 		return "";
 	}
 	
-	/*public int InsertFileInfo(String userName, FileDetailDTO fileDetail){
-		String sqlInsertFile = "INSERT INTO filedetail (user_id, state_id, filename, "
-				+ "urlfile, rolefile, dateupload, size, checksum) VALUES (?,?,?,?,?,?,?,?)";
-		
+	public int InsertFileInfo(String userName, FileDTO fileDetail) throws RemoteException{
+		String sqlInsertFile = "INSERT INTO `file` (`filename`, `user_id`, `file_state_id`, `urlfile`, `file_role_id`, `dateupload`, `size`, `checksum`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 		try {
 			PreparedStatement statement = connectDB.GetPrepareStatement(sqlInsertFile);
-			statement.setInt(1, fileDetail.getFile_id());
-			statement.setInt(2, fileDetail.getState_id());
-			statement.setString(3, fileDetail.getFileName());
+			//statement.setInt(1, fileDetail.getFileId());
+			statement.setString(1, fileDetail.getFileName());
+			statement.setInt(2, fileDetail.getUserId());
+			statement.setInt(3, fileDetail.getFileStateId());
 			statement.setString(4, fileDetail.getUrlFile());
-			statement.setString(5, fileDetail.getRoleFile());
+			statement.setInt(5, fileDetail.getFileRoleId());
 			statement.setObject(6, fileDetail.getDateUpload());
-			statement.setInt(7, fileDetail.getSize());
+			statement.setLong(7, fileDetail.getSize());
 			statement.setString(8, fileDetail.getCheckSum());
-			statement.execute();
+			if(!statement.execute()){// it's a insert sql, so this function return false if it execute success
+				return 1;
+			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-		
+		} finally {
+			try {
+				connectDB.Close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}		
 		return 0;
-	}*/
+	}
 
 	public String Login(String userName, String passWord)
 			throws RemoteException {
@@ -78,9 +85,14 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements F
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		finally {
+			try {
+				connectDB.Close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		return null;
 	}
-	
-	
-
 }

@@ -109,7 +109,7 @@
 		</div>
 	</div>
 	<!-- Thah thai -->
-	<div id="mfHeader" style="width: 1032px;">
+	<div id="mfHeader" style="width: 1145px;">
 		<div id="logo">
 			<h2>Group SE06</h2>
 		</div>
@@ -132,7 +132,7 @@
 					<div id="percent">0%</div>
 				</div>
 				<div id="btnSubmit" >
-					<button class="btn btn-info" id="submitUp">Upload</button>
+					<button class="btn btn-success" id="submitUp">Upload</button>
 				</div>
 			</form>
 		
@@ -160,31 +160,11 @@
 
 	<!-- div main -->
 	<div id="mfMain">
-		<table class="table table-striped table-bordered">
-			<thead>
-				<tr>
-					<th data-field="state" data-checkbox="true"></th>
-					<th>Name</th>
-					<th>Street</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td>1</td>
-					<td>Anna Awesome</td>
-					<td>Broome Street</td>
-				</tr>
-				<tr>
-					<td>2</td>
-					<td>Debbie Dallas</td>
-					<td>Houston Street</td>
-				</tr>
-				<tr>
-					<td>3</td>
-					<td>John Doe</td>
-					<td>Madison Street</td>
-				</tr>
-			</tbody>
+		<table id="tbFile" class="table table-striped table-bordered">
+			<tr>
+				<th>ID</th>
+				<th>File Name</th>
+			</tr>
 		</table>
 	</div>
 

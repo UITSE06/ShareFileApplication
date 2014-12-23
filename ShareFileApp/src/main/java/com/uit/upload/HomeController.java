@@ -6,6 +6,8 @@ import java.io.UnsupportedEncodingException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.Calendar;
+import java.util.Date;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import DataTranferObject.FileDTO;
 import appServerHandling.FileManagementServices;
 
 /**
@@ -43,7 +46,9 @@ public class HomeController {
 
 	private static final Logger logger = LoggerFactory
 			.getLogger(HomeController.class);
+	
 	private FileManagementServices fmServiceInterface;
+	private String currentUserName = "";
 	
 
 	@RequestMapping(value = "/", method = RequestMethod.GET)
@@ -82,8 +87,8 @@ public class HomeController {
 			if(username == null || pass == null){
 				return "login";
 			}
-			String userNameLogin = fmServiceInterface.Login(username, pass);
-			if(username.equals(userNameLogin)){
+			currentUserName = fmServiceInterface.Login(username, pass);
+			if(username.equals(currentUserName)){
 				return "index";
 			}
 		} catch (RemoteException e) {
@@ -178,18 +183,33 @@ public class HomeController {
 	public void upload(HttpServletResponse response,
 			@RequestParam(value = "myfile") MultipartFile file) throws ServletException, IOException {
 
-		boolean isMultipart = file.isEmpty();
-
-		String pp = System.getProperty("catalina.home");
+		boolean isEmptyFile = file.isEmpty();
+		String pp = System.getProperty("catalina.home");//url 
 		///
 		// port, ip, 
 		//final String UPLOAD_DIRECTORY = "F:/TestBackup/";
 		
 		String fileNameToCreate = pp + "\\SaveFile\\" + file.getOriginalFilename();
-		//insert database
 		
-		// process only if its multipart content
-		if (!isMultipart) {
+		//insert database
+		FileDTO fileDetail = new FileDTO();
+		fileDetail.setCheckSum("checkSum001");
+		fileDetail.setDateUpload(Calendar.getInstance().getTime());
+		fileDetail.setFileId(1);
+		fileDetail.setFileName(file.getOriginalFilename());
+		fileDetail.setFileRoleId(1);
+		fileDetail.setSize(file.getSize());
+		fileDetail.setFileStateId(1);
+		fileDetail.setUrlFile(pp + "\\SaveFile\\");
+		fileDetail.setUserId(1);
+		int rs = fmServiceInterface.InsertFileInfo(currentUserName, fileDetail);
+		if(rs == 1){
+			logger.info("Insert Database success!" + rs);
+		} else {
+			logger.info("Insert Database fail!" + rs);
+		}
+		// process only if it's not multipart content, multipart mean file is empty
+		if (!isEmptyFile) {
 			try {				
 				File fileCreate = new File(fileNameToCreate);
 				FileUtils.writeByteArrayToFile(fileCreate, file.getBytes());				

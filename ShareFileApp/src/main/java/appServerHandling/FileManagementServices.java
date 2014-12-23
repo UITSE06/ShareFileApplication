@@ -11,6 +11,6 @@ import DataTranferObject.*;
 public interface FileManagementServices extends Remote {
 	public String UploadFile(String userName, String urlFile) throws RemoteException;
 	public String DownloadFile(String IP, String urlFile)  throws RemoteException;
-	public int InsertFileInfo(String userName, FileDTO fileDetail) throws RemoteException;
+	public int InsertFileInfo(String userName, FileDTO fileDetail);
 	public String Login(String userName, String passWord) throws RemoteException;
 }

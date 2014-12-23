@@ -4,16 +4,11 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.sql.SQLException;
 
-
-
-
-/**
- * Hello world!
- *
- */
+import DataTranferObject.FileDTO;
 import appServerHandling.*;
 
 import java.sql.Connection;
+import java.util.Calendar;
 
 public class ShareFileServer 
 {
@@ -29,6 +24,27 @@ public class ShareFileServer
 			FileManagementServicesImpl demo = new FileManagementServicesImpl();
 			String rs = demo.Login("quanta", "anhquan");
 			System.out.println(rs);
+			///
+			/*
+			//insert database
+			FileDTO fileDetail = new FileDTO();
+			fileDetail.setCheckSum("checkSum001");
+			fileDetail.setDateUpload(Calendar.getInstance().getTime());
+			fileDetail.setFileId(1);
+			fileDetail.setFileName("fileNameDemo");
+			fileDetail.setFileRoleId(1);
+			fileDetail.setSize(123456);
+			fileDetail.setFileStateId(1);
+			fileDetail.setUrlFile("path" + "\\SaveFile\\");
+			fileDetail.setUserId(1);
+			int rs1 = demo.InsertFileInfo("AnhQuan", fileDetail);
+			if(rs1 == 1){
+				System.out.println("Insert Database success!" + rs1);
+			} else {
+				System.out.println("Insert Database fail!" + rs1);
+			}
+			*/
+			///
 		} catch (Exception ex){
 			ex.printStackTrace();
 		}
