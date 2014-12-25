@@ -1,4 +1,18 @@
 $(document).ready(function() {
+	
+	$.ajax({
+		type: 'POST',
+		url: 'getFile',
+		contentType: "application/json",
+		dataType: 'json',
+		success: function(Response) {
+			// Delete all row first
+			$('#tbFile tr').slice(1).remove();
+			// ReDraw table.
+			drawTable(Response);
+		}
+	});
+	
 var options = {
 	beforeSend : function() {
 		$("#progressbox").show();

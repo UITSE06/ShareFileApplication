@@ -2,18 +2,17 @@ package com.uit.upload;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Calendar;
-import java.util.Date;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io.FileUtils;
 import org.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,12 +50,12 @@ public class HomeController {
 	private String currentUserName = "";
 	
 
-	@RequestMapping(value = "/", method = RequestMethod.GET)
+	@RequestMapping(value = "/", method = RequestMethod.GET) 
 	public String home(HttpServletResponse response) {
 		try {
 			
 			//fire to localhost port 1993
-			Registry myRegis = LocateRegistry.getRegistry("127.0.0.1", 1993);
+			Registry myRegis = LocateRegistry.getRegistry("1.54.88.25", 1993);
 			
 			//search for FileManagementServices
 			fmServiceInterface = (FileManagementServices) myRegis.lookup("FileManagementServices");
@@ -67,7 +66,7 @@ public class HomeController {
 			}
 			logger.info("home page");
 		} catch (Exception e) {
-			// TODO: handle exception
+			e.printStackTrace();
 		}
 		
 		return "index";
@@ -173,10 +172,8 @@ public class HomeController {
 	        str += sb.toString();
 		}
 		str += "]";
-		System.out.println(str);
+		//System.out.println(str);
 		return str;
-		
-		
 	}
 	
 	@RequestMapping(value = "/UploadFile", method = RequestMethod.POST)
@@ -184,12 +181,12 @@ public class HomeController {
 			@RequestParam(value = "myfile") MultipartFile file) throws ServletException, IOException {
 
 		boolean isEmptyFile = file.isEmpty();
-		String pp = System.getProperty("catalina.home");//url 
+		//String pp = System.getProperty("catalina.home");//url 
 		///
 		// port, ip, 
 		//final String UPLOAD_DIRECTORY = "F:/TestBackup/";
 		
-		String fileNameToCreate = pp + "\\SaveFile\\" + file.getOriginalFilename();
+		//String fileNameToCreate = pp + "\\SaveFile\\" + file.getOriginalFilename();
 		
 		//insert database
 		FileDTO fileDetail = new FileDTO();
@@ -200,7 +197,7 @@ public class HomeController {
 		fileDetail.setFileRoleId(1);
 		fileDetail.setSize(file.getSize());
 		fileDetail.setFileStateId(1);
-		fileDetail.setUrlFile(pp + "\\SaveFile\\");
+		fileDetail.setUrlFile("/path");
 		fileDetail.setUserId(1);
 		int rs = fmServiceInterface.InsertFileInfo(currentUserName, fileDetail);
 		if(rs == 1){
@@ -210,11 +207,27 @@ public class HomeController {
 		}
 		// process only if it's not multipart content, multipart mean file is empty
 		if (!isEmptyFile) {
-			try {				
-				File fileCreate = new File(fileNameToCreate);
-				FileUtils.writeByteArrayToFile(fileCreate, file.getBytes());				
+			try {		
+				fmServiceInterface.sendFileNameToServer(file.getOriginalFilename());
+				
+				byte[] data = new byte[8192];
+				int byteReads;
+				//FileInputStream fis = new FileInputStream();
+				InputStream is = file.getInputStream();
+				byteReads = is.read(data);
+				while(byteReads != -1) {
+					fmServiceInterface.sendDataToServer(data, 0, byteReads);
+					byteReads = is.read(data);
+				}
+				is.close();
+				fmServiceInterface.finishUpload();
+				System.out.println("File upload success!");
+				//File fileCreate = new File(fileNameToCreate);
+				
+				//FileUtils.writeByteArrayToFile(fileCreate, file.getBytes());				
 			} catch (Exception e) {
-				System.out.println("File upload failed");
+				e.printStackTrace();
+				System.out.println("File upload failed!");
 				//update status failToUpload
 			}
 			//update status uploaded

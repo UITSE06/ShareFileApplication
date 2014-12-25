@@ -5,22 +5,18 @@
 <!DOCTYPE htm>
 <html>
 <head>
-<link rel="stylesheet" href="<c:url value ="/resources/mf.css"/>" type="text/css">
-<link rel="stylesheet" href="<c:url value ="/resources/indexStyle.css"/>" type="text/css">
-<link rel="stylesheet" href="<c:url value ="/resources/uploadStyle.css"/>" type="text/css">
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.js" ></script>
-<script src="http://malsup.github.com/jquery.form.js" ></script>
-<script
-	src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
-<link
-	href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"
-	rel="stylesheet">
+<link rel="stylesheet" href="<c:url value ="/resources/css/mf.css"/>" type="text/css">
+<link rel="stylesheet" href="<c:url value ="/resources/css/indexStyle.css"/>" type="text/css">
+<link rel="stylesheet" href="<c:url value ="/resources/css/uploadStyle.css"/>" type="text/css">
+<link rel="stylesheet" href="<c:url value ="/resources/css/bootstrap.min.css"/>" type="text/css">
+<link rel="stylesheet" href="<c:url value ="/resources/css/normalize.css"/>" type="text/css">
 
-<script src="<c:url value ="/resources/bootstrap-filestyle.min.js"/>" type="text/javascript" >
-</script>
-
-<script src="<c:url value ="/resources/fileUploadScript.js"/>" type="text/javascript" >
-</script>
+<script src="<c:url value ="/resources/js/jquery.js"/>" type="text/javascript" ></script>
+<script src="<c:url value ="/resources/js/jquery.form.js"/>" type="text/javascript" ></script>
+<script src="<c:url value ="/resources/js/bootstrap.min.js"/>" type="text/javascript" ></script>
+<script src="<c:url value ="/resources/js/bootstrap-filestyle.min.js"/>" type="text/javascript" ></script>
+<script src="<c:url value ="/resources/js/fileUploadScript.js"/>" type="text/javascript" ></script>
+<script src="<c:url value ="/resources/js/modernizr.js"/>" type="text/javascript" ></script>
 
 </head>
 <body class="appBarMinHeight">
@@ -28,37 +24,36 @@
 	<div id="mfAppBar" class="showDiscount noAvatarSelected">
 		<div id="appAvatar">
 			<div class="appAvatar"
-				style="background-image: url(//www.mediafire.com/images/icons/myfiles/default.png?1951)"></div>
+				style="background-image: /resources/image/default.png"></div>
 			<span class="avatarUserName" title="n.thanhthai3010">n.thanhthai3010<span
 				class="avatarEdit"></span></span> <span class="tooltip point-left alt">n.thanhthai3010</span>
 			<div class="avatarMenu popupContainer">
 				<ul>
 					<li id="userEmail">n.thanhthai3010@gmail.com</li>
 					<li><a class="ico30rename maskedIcons settingsLink"
-						href="https://www.mediafire.com/myaccount/accountbilling.php">Edit
-							username</a></li>
+						href="">Edit username</a></li>
 					<li><a class="ico30changeAvatar maskedIcons settingsLink"
-						href="https://www.mediafire.com/myaccount/customize_avatar.php"><span>Change
-								avatar</span><span id="uploadAvatar">Add an avatar</span></a></li>
+						href=""><span>Change avatar</span>
+						<span id="uploadAvatar">Add an avatar</span></a></li>
 					<li class="divider"></li>
 					<li><a class="ico30settings maskedIcons settingsLink"
-						href="https://www.mediafire.com/myaccount/">Account settings</a></li>
+						href="">Account settings</a></li>
 					<li><a class="ico30upgrade maskedIcons upGrade"
-						href="https://www.mediafire.com/upgrade/">Upgrade <span>-
+						href="">Upgrade <span>-
 								<span>50% OFF</span>
 						</span></a></li>
 					<li><a class="ico30add maskedIcons"
-						href="https://www.mediafire.com/earnspace/">Earn free space!</a></li>
+						href="">Earn free space!</a></li>
 					<li><a id="mfStats" class="ico30chart maskedIcons" href="#">View
 							statistics</a></li>
 					<li><a class="ico30mobile maskedIcons"
-						href="https://www.mediafire.com/software/">Desktop &amp;
+						href="">Desktop &amp;
 							Mobile</a></li>
 					<li><a id="mfLogOut" class="ico30logout maskedIcons" href="#">Log
 							out</a></li>
 					<li class="divider"></li>
 				</ul>
-				<a href="http://www.mediafire.com/?ssl=off"
+				<a href=""
 					title="Turn Secure Encryption Off" class="appSettingControl">
 					SSL <span class="toggle-switch tsSmall on"> <span
 						class="ts-slider"> <label class="ts-l">On</label> <span
@@ -70,6 +65,7 @@
 		</div>
 
 		<label class="appGroupLabel">Apps</label>
+		
 		<ul id="appList" class="appGroup">
 			<li><a class="appBtn appMyFiles appOn" href="#"
 				data-app="myfiles"> Files <span class="tooltip point-left alt">Files</span>
@@ -94,7 +90,7 @@
 					<span id="storage_applicable" style=""><strong><span
 							id="storage_used">1.8 GB</span> / <span id="storage_total">50
 								GB</span></strong></span> <span style="display: none;" id="storage_not-applicable">N/A</span>
-					<a class="smUpgradeSpace" href="https://www.mediafire.com/upgrade/"><span>Upgrade</span><em>50%
+					<a class="smUpgradeSpace" href=""><span>Upgrade</span><em>50%
 							OFF</em></a>
 				</div>
 			</div>
@@ -108,6 +104,7 @@
 			</div>
 		</div>
 	</div>
+	
 	<!-- Thah thai -->
 	<div id="mfHeader" style="width: 1145px;">
 		<div id="logo">
@@ -131,6 +128,7 @@
 					<div id="progressbar"></div>
 					<div id="percent">0%</div>
 				</div>
+				
 				<div id="btnSubmit" >
 					<button class="btn btn-success" id="submitUp">Upload</button>
 				</div>

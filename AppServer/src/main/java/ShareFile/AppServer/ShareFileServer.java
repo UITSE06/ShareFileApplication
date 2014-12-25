@@ -3,12 +3,8 @@ package ShareFile.AppServer;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.sql.SQLException;
-
-import DataTranferObject.FileDTO;
 import appServerHandling.*;
-
 import java.sql.Connection;
-import java.util.Calendar;
 
 public class ShareFileServer 
 {
@@ -21,9 +17,11 @@ public class ShareFileServer
 			//create a new service
 			regis.rebind("FileManagementServices", new FileManagementServicesImpl());
 			System.out.println("Server started!");
+			
 			FileManagementServicesImpl demo = new FileManagementServicesImpl();
 			String rs = demo.Login("quanta", "anhquan");
 			System.out.println(rs);
+			
 			///
 			/*
 			//insert database
