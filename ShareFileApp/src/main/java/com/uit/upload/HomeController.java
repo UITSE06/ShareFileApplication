@@ -1,12 +1,15 @@
 package com.uit.upload;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.ArrayList;
 import java.util.Calendar;
 
 import javax.servlet.ServletException;
@@ -55,7 +58,7 @@ public class HomeController {
 		try {
 			
 			//fire to localhost port 1993
-			Registry myRegis = LocateRegistry.getRegistry("1.54.88.25", 1993);
+			Registry myRegis = LocateRegistry.getRegistry("127.0.0.1", 1993);
 			
 			//search for FileManagementServices
 			fmServiceInterface = (FileManagementServices) myRegis.lookup("FileManagementServices");
@@ -146,23 +149,20 @@ public class HomeController {
 		
 		String str = "";
 		
-		String catalinaHome = System.getProperty("catalina.home");
-		String path = catalinaHome + "\\SaveFile\\";
-		
-		File folder = new File(path);
-		File[] listOfFile = folder.listFiles();
-		
+		ArrayList<String> listFileName = fmServiceInterface.getListOfFile();
 		str += "[";
-		
-		for (int i = 0; i < listOfFile.length; i++) {
+		if(listFileName == null){
+			return "";
+		}
+		for (int i = 0; i < listFileName.size(); i++) {
 			StringBuffer sb = new StringBuffer();
 			sb.append("{"); // Bắt đầu một đối tượng JSON là dấu mở ngoặc nhọn
 			 
-	        sb.append("\"id\":\"" + i + "\""); 
+	        sb.append("\"id\":\"" + (i + 1) + "\""); 
 	        sb.append(","); // sau mỗi cặp key/value là một dấu phẩy
-	        sb.append("\"name\":\"" + listOfFile[i].getName() + "\"");
+	        sb.append("\"name\":\"" + listFileName.get(i) + "\"");
 	 
-	        if (i == listOfFile.length - 1) {
+	        if (i == (listFileName.size() - 1)) {
 	        	sb.append("}"); // Kết thúc một đối tượng JSON là dấu đóng ngoặc nhọn
 			} else {
 				sb.append("},"); // Kết thúc một đối tượng JSON là dấu đóng ngoặc nhọn
@@ -172,8 +172,27 @@ public class HomeController {
 	        str += sb.toString();
 		}
 		str += "]";
-		//System.out.println(str);
+		System.out.println(str);
 		return str;
+	}
+	
+	@RequestMapping(value = "/download", method = RequestMethod.POST)
+	public final @ResponseBody String downloadFile(@RequestParam(value = "myfile") String fileName,
+			@RequestParam(value = "myfile") String saveTo)
+			throws IOException, JSONException {
+		try {
+	         byte[] filedata = fmServiceInterface.downloadFile("filename gì đó");
+	         File file = new File("filename gì đó");
+	         BufferedOutputStream output = new
+	           BufferedOutputStream(new FileOutputStream(file.getName()));
+	         output.write(filedata,0,filedata.length);
+	         output.flush();
+	         output.close();
+	      } catch(Exception e) {
+	         System.err.println("FileServer exception: "+ e.getMessage());
+	         e.printStackTrace();
+	      }
+		return "";
 	}
 	
 	@RequestMapping(value = "/UploadFile", method = RequestMethod.POST)
@@ -181,13 +200,7 @@ public class HomeController {
 			@RequestParam(value = "myfile") MultipartFile file) throws ServletException, IOException {
 
 		boolean isEmptyFile = file.isEmpty();
-		//String pp = System.getProperty("catalina.home");//url 
-		///
-		// port, ip, 
-		//final String UPLOAD_DIRECTORY = "F:/TestBackup/";
-		
-		//String fileNameToCreate = pp + "\\SaveFile\\" + file.getOriginalFilename();
-		
+
 		//insert database
 		FileDTO fileDetail = new FileDTO();
 		fileDetail.setCheckSum("checkSum001");
@@ -205,14 +218,13 @@ public class HomeController {
 		} else {
 			logger.info("Insert Database fail!" + rs);
 		}
-		// process only if it's not multipart content, multipart mean file is empty
+		// process only if it's not empty
 		if (!isEmptyFile) {
 			try {		
 				fmServiceInterface.sendFileNameToServer(file.getOriginalFilename());
 				
 				byte[] data = new byte[8192];
 				int byteReads;
-				//FileInputStream fis = new FileInputStream();
 				InputStream is = file.getInputStream();
 				byteReads = is.read(data);
 				while(byteReads != -1) {
@@ -221,10 +233,7 @@ public class HomeController {
 				}
 				is.close();
 				fmServiceInterface.finishUpload();
-				System.out.println("File upload success!");
-				//File fileCreate = new File(fileNameToCreate);
-				
-				//FileUtils.writeByteArrayToFile(fileCreate, file.getBytes());				
+				System.out.println("File upload success!");			
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.out.println("File upload failed!");

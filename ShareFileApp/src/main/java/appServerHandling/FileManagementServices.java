@@ -7,14 +7,20 @@ package appServerHandling;
 */
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 
 import DataTranferObject.*;
 public interface FileManagementServices extends Remote {
-	//public String UploadFile(String userName, String urlFile) throws RemoteException;
+	//upload file
 	public void sendFileNameToServer(String fileName) throws RemoteException;
 	public void sendDataToServer(byte[] data, int offset, int length) throws RemoteException;
 	public void finishUpload() throws RemoteException;
-	public String DownloadFile(String IP, String urlFile)  throws RemoteException;
-	public int InsertFileInfo(String userName, FileDTO fileDetail);
+	//download file
+	public byte[] downloadFile(String fileName) throws RemoteException;
+	//get list of file uploaded
+	public ArrayList<String> getListOfFile() throws RemoteException;	
+	//insert file info to database
+	public int InsertFileInfo(String userName, FileDTO fileDetail) throws RemoteException;
+	//login
 	public String Login(String userName, String passWord) throws RemoteException;
 }
