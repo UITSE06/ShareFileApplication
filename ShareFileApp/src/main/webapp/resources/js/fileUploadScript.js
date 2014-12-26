@@ -67,11 +67,7 @@ function drawRow(rowData) {
     var row = $("<tr />")
     $("#tbFile").append(row); //this will append tr element to table... keep its reference for a while since we will add cels into it
     row.append($("<td>" + rowData.id + "</td>"));
-    row.append($("<td><a id = \"fileName\" href =\"\" onclick=\"downloadFile()\" value = \"anhquan\" >" + rowData.name + "</a></td>"));
-}
-
-function downloadFile(){
-	//alert(document.getElementById("fileName").value);
-	alert($(this).parent().attr('value'));
+    row.append($("<td><a href=\"download?fileName=" + rowData.name +
+    		"\" >" + rowData.name + "</a></td>"));
 }
 

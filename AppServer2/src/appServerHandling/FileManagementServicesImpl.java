@@ -70,10 +70,10 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 
 	public byte[] downloadFile(String fileName) {
 		try {
-			File file = new File(fileName);
+			File file = new File("FileUploaded\\" + fileName);
 			byte buffer[] = new byte[(int) file.length()];
 			BufferedInputStream input = new BufferedInputStream(
-					new FileInputStream(fileName));
+					new FileInputStream("FileUploaded\\" + fileName));
 			input.read(buffer, 0, buffer.length);
 			input.close();
 			return (buffer);
