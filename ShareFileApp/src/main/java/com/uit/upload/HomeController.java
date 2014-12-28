@@ -1,16 +1,19 @@
 package com.uit.upload;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.Locale;
+import java.rmi.Naming;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.util.ArrayList;
+import java.util.Calendar;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io.FileUtils;
 import org.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,40 +23,83 @@ import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.ModelAndView;
+
+import DataTranferObject.FileDTO;
+import appServerHandling.FileManagementServices;
 
 /**
- * Handles requests for the application home page.
+ * Handles requests for the application home page. This comment is added by Anh
+ * Quan who is very handsome boy edit on quanta branch
  */
 @Controller
 public class HomeController {
 
+	public FileManagementServices getFmServiceInterface() {
+		return fmServiceInterface;
+	}
+
 	private static final Logger logger = LoggerFactory
 			.getLogger(HomeController.class);
 
-	/**
-	 * Simply selects the home view to render by returning its name.
-	 */
+	private FileManagementServices fmServiceInterface;
+	private String currentUserName = "";
+
 	@RequestMapping(value = "/", method = RequestMethod.GET)
-	public String home(Locale locale, Model model) {
-		logger.info("Welcome home! The client locale is {}.", locale);
+	public String home(HttpServletResponse response) {
+		try {
 
-		Date date = new Date();
-		DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG,
-				DateFormat.LONG, locale);
-
-		String formattedDate = dateFormat.format(date);
-
-		model.addAttribute("serverTime", formattedDate);
+			// fire to localhost port 1993
+			//System.setProperty("java.rmi.server.hostname", "54.169.37.221");
+			Registry myRegis = LocateRegistry.getRegistry("127.0.0.1", 1993);
+			//Registry myRegis = LocateRegistry.getRegistry("127.0.0.1", 1993);	
+			// search for FileManagementServices
+			fmServiceInterface = (FileManagementServices) myRegis
+					.lookup("FileManagementServices");
+			if (fmServiceInterface != null) {
+				logger.info("Found server FileManagementServices!");
+			} else {
+				logger.info("Server FileManagementServices not found!");
+			}
+			logger.info("home page");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		return "index";
 	}
-	
+
+	@RequestMapping(value = "/login", method = RequestMethod.GET)
+	public String Login(HttpServletResponse response) {
+		return "login";
+	}
+
+	@RequestMapping(value = "/submitLogin", method = RequestMethod.POST)
+	// @ResponseBody String message(HttpServletRequest request)
+	public String LoginConfirm(HttpServletRequest request) {
+		try {
+			String username = request.getParameter("userName");
+			String pass = request.getParameter("pass");
+			if (username == null || pass == null) {
+				return "login";
+			}
+			currentUserName = fmServiceInterface.Login(username, pass);
+			if (username.equals(currentUserName)) {
+				return "index";
+			}
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return "login";
+	}
+
 	@RequestMapping(value = "/multiPartFileSingle", method = RequestMethod.POST)
 	public void uploadFile(HttpServletResponse response,
 			@RequestParam(value = "file") MultipartFile file) {
@@ -97,68 +143,123 @@ public class HomeController {
 			}
 		}
 	}
-	
+
 	@RequestMapping(value = "/getFile", method = RequestMethod.POST)
-	public final @ResponseBody String getFile() throws IOException, JSONException {
-		
+	public final @ResponseBody String getFile() throws IOException,
+			JSONException {
+
 		String str = "";
-		
-		String catalinaHome = System.getProperty("catalina.home");
-		String path = catalinaHome + "\\SaveFile\\";
-		
-		File folder = new File(path);
-		File[] listOfFile = folder.listFiles();
-		
+
+		ArrayList<String> listFileName = fmServiceInterface.getListOfFile();
 		str += "[";
-		
-		for (int i = 0; i < listOfFile.length; i++) {
+		if (listFileName == null) {
+			return "";
+		}
+		for (int i = 0; i < listFileName.size(); i++) {
 			StringBuffer sb = new StringBuffer();
 			sb.append("{"); // Bắt đầu một đối tượng JSON là dấu mở ngoặc nhọn
-			 
-	        sb.append("\"id\":\"" + i + "\""); 
-	        sb.append(","); // sau mỗi cặp key/value là một dấu phẩy
-	        sb.append("\"name\":\"" + listOfFile[i].getName() + "\"");
-	 
-	        if (i == listOfFile.length - 1) {
-	        	sb.append("}"); // Kết thúc một đối tượng JSON là dấu đóng ngoặc nhọn
+
+			sb.append("\"id\":\"" + (i + 1) + "\"");
+			sb.append(","); // sau mỗi cặp key/value là một dấu phẩy
+			sb.append("\"name\":\"" + listFileName.get(i) + "\"");
+
+			if (i == (listFileName.size() - 1)) {
+				sb.append("}"); // Kết thúc một đối tượng JSON là dấu đóng ngoặc
+								// nhọn
 			} else {
-				sb.append("},"); // Kết thúc một đối tượng JSON là dấu đóng ngoặc nhọn
+				sb.append("},"); // Kết thúc một đối tượng JSON là dấu đóng
+									// ngoặc nhọn
 			}
-	        
-	        
-	        str += sb.toString();
+
+			str += sb.toString();
 		}
 		str += "]";
-		System.out.println(str);
+		// System.out.println(str);
 		return str;
-		
-		
 	}
-	
+
+	/*
+	 * @RequestMapping(value = "/download", method = RequestMethod.GET) public
+	 * String downloadFile(@RequestParam(value = "fileName") String fileName) //
+	 * @RequestParam(value = "myfile") String saveTo) throws IOException,
+	 * JSONException { try { byte[] filedata =
+	 * fmServiceInterface.downloadFile(fileName); if (filedata != null) { String
+	 * catalinaHome = System.getProperty("catalina.home"); String path =
+	 * catalinaHome + "\\FileDownload\\";
+	 * 
+	 * //File folder = new File(path); //File[] listOfFile = folder.listFiles();
+	 * BufferedOutputStream output = new BufferedOutputStream( new
+	 * FileOutputStream(path + fileName)); output.write(filedata, 0,
+	 * filedata.length); output.flush(); output.close();
+	 * System.out.println("file is downloaded!"); } } catch (Exception e) {
+	 * System.err.println("FileServer exception: " + e.getMessage());
+	 * e.printStackTrace(); } return "index"; }
+	 */
+
+	@RequestMapping(value = "/download", method = RequestMethod.GET)
+	public ModelAndView downloadFile(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+
+		String fileName = request.getParameter("fileName");
+		byte[] filedata = fmServiceInterface.downloadFile(fileName);
+
+		response.setHeader("Content-Disposition", "attachment; filename=\""
+				+ fileName + "\"");
+		response.setContentLength(filedata.length);
+
+		FileCopyUtils.copy(filedata, response.getOutputStream());
+		response.getOutputStream().flush();
+		response.getOutputStream().close();
+		return null;
+	}
+
 	@RequestMapping(value = "/UploadFile", method = RequestMethod.POST)
 	public void upload(HttpServletResponse response,
-			@RequestParam(value = "myfile") MultipartFile file) throws ServletException, IOException {
+			@RequestParam(value = "myfile") MultipartFile file)
+			throws ServletException, IOException {
 
-		boolean isMultipart = file.isEmpty();
+		boolean isEmptyFile = file.isEmpty();
 
-		String pp = System.getProperty("catalina.home");
-		///
-		// port, ip, 
-		//final String UPLOAD_DIRECTORY = "F:/TestBackup/";
-		
-		String fileNameToCreate = pp + "\\SaveFile\\" + file.getOriginalFilename();
-		//insert database
-		
-		// process only if its multipart content
-		if (!isMultipart) {
-			try {				
-				File fileCreate = new File(fileNameToCreate);
-				FileUtils.writeByteArrayToFile(fileCreate, file.getBytes());				
+		// insert database
+		FileDTO fileDetail = new FileDTO();
+		fileDetail.setCheckSum("checkSum001");
+		fileDetail.setDateUpload(Calendar.getInstance().getTime());
+		fileDetail.setFileId(1);
+		fileDetail.setFileName(file.getOriginalFilename());
+		fileDetail.setFileRoleId(1);
+		fileDetail.setSize(file.getSize());
+		fileDetail.setFileStateId(1);
+		fileDetail.setUrlFile("/path");
+		fileDetail.setUserId(1);
+		int rs = fmServiceInterface.InsertFileInfo(currentUserName, fileDetail);
+		if (rs == 1) {
+			logger.info("Insert Database success!" + rs);
+		} else {
+			logger.info("Insert Database fail!" + rs);
+		}
+		// process only if it's not empty
+		if (!isEmptyFile) {
+			try {
+				fmServiceInterface.sendFileNameToServer(file
+						.getOriginalFilename());
+
+				byte[] data = new byte[8192];
+				int byteReads;
+				InputStream is = file.getInputStream();
+				byteReads = is.read(data);
+				while (byteReads != -1) {
+					fmServiceInterface.sendDataToServer(data, 0, byteReads);
+					byteReads = is.read(data);
+				}
+				is.close();
+				fmServiceInterface.finishUpload();
+				System.out.println("File upload success!");
 			} catch (Exception e) {
-				System.out.println("File upload failed");
-				//update status failToUpload
+				e.printStackTrace();
+				System.out.println("File upload failed!");
+				// update status failToUpload
 			}
-			//update status uploaded
+			// update status uploaded
 		}
 	}
 }
