@@ -1,11 +1,9 @@
 package com.uit.upload;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -25,11 +23,13 @@ import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.ModelAndView;
 
 import DataTranferObject.FileDTO;
 import appServerHandling.FileManagementServices;
@@ -56,8 +56,9 @@ public class HomeController {
 		try {
 
 			// fire to localhost port 1993
+			//System.setProperty("java.rmi.server.hostname", "54.169.37.221");
 			Registry myRegis = LocateRegistry.getRegistry("127.0.0.1", 1993);
-
+			//Registry myRegis = LocateRegistry.getRegistry("127.0.0.1", 1993);	
 			// search for FileManagementServices
 			fmServiceInterface = (FileManagementServices) myRegis
 					.lookup("FileManagementServices");
@@ -177,26 +178,39 @@ public class HomeController {
 		return str;
 	}
 
+	/*
+	 * @RequestMapping(value = "/download", method = RequestMethod.GET) public
+	 * String downloadFile(@RequestParam(value = "fileName") String fileName) //
+	 * @RequestParam(value = "myfile") String saveTo) throws IOException,
+	 * JSONException { try { byte[] filedata =
+	 * fmServiceInterface.downloadFile(fileName); if (filedata != null) { String
+	 * catalinaHome = System.getProperty("catalina.home"); String path =
+	 * catalinaHome + "\\FileDownload\\";
+	 * 
+	 * //File folder = new File(path); //File[] listOfFile = folder.listFiles();
+	 * BufferedOutputStream output = new BufferedOutputStream( new
+	 * FileOutputStream(path + fileName)); output.write(filedata, 0,
+	 * filedata.length); output.flush(); output.close();
+	 * System.out.println("file is downloaded!"); } } catch (Exception e) {
+	 * System.err.println("FileServer exception: " + e.getMessage());
+	 * e.printStackTrace(); } return "index"; }
+	 */
+
 	@RequestMapping(value = "/download", method = RequestMethod.GET)
-	public String downloadFile(@RequestParam(value = "fileName") String fileName)
-	// @RequestParam(value = "myfile") String saveTo)
-			throws IOException, JSONException {
-		try {
-			byte[] filedata = fmServiceInterface.downloadFile(fileName);
-			if (filedata != null) {
-				//File file = new File(fileName);
-				BufferedOutputStream output = new BufferedOutputStream(
-						new FileOutputStream("E:\\" + fileName));
-				output.write(filedata, 0, filedata.length);
-				output.flush();
-				output.close();
-				System.out.println("file is downloaded!");
-			}
-		} catch (Exception e) {
-			System.err.println("FileServer exception: " + e.getMessage());
-			e.printStackTrace();
-		}
-		return "index";
+	public ModelAndView downloadFile(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+
+		String fileName = request.getParameter("fileName");
+		byte[] filedata = fmServiceInterface.downloadFile(fileName);
+
+		response.setHeader("Content-Disposition", "attachment; filename=\""
+				+ fileName + "\"");
+		response.setContentLength(filedata.length);
+
+		FileCopyUtils.copy(filedata, response.getOutputStream());
+		response.getOutputStream().flush();
+		response.getOutputStream().close();
+		return null;
 	}
 
 	@RequestMapping(value = "/UploadFile", method = RequestMethod.POST)

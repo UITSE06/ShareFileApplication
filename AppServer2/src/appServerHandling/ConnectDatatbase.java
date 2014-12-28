@@ -26,7 +26,7 @@ public class ConnectDatatbase {
 			Properties info = new Properties();
 			info.setProperty("characterEncoding", "utf8");
 			info.setProperty("user", "root");
-			info.setProperty("password", "");
+			info.setProperty("password", "anhquan1234");
 			connection = DriverManager.getConnection(conString,info);
 			return connection;
 	}

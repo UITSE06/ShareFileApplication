@@ -10,18 +10,18 @@ import java.sql.Connection;
 
 public class ShareFileServer 
 {
-	private void startServer(){
+	private void startServer(){//String rmiIP, String port, String serverHostName){
 		try{
 			
-			//create registry on port 1993
+			FileManagementServicesImpl fms = new FileManagementServicesImpl();
+			//create registry on port 1099
 			Registry regis = LocateRegistry.createRegistry(1993);
-			
+			System.setProperty("java.rmi.server.hostname", "127.0.0.1");
 			//create a new service
-			regis.rebind("FileManagementServices", new FileManagementServicesImpl());
+			regis.rebind("FileManagementServices", fms);
 			System.out.println("Server started!");
 			
-			FileManagementServicesImpl demo = new FileManagementServicesImpl();
-			String rs = demo.Login("quanta", "anhquan");
+			String rs = fms.Login("quanta", "anhquan");
 			System.out.println(rs);
 			///
 			/*
@@ -64,6 +64,6 @@ public class ShareFileServer
 			e.printStackTrace();
 		}
         ShareFileServer sfServer = new ShareFileServer();
-        sfServer.startServer();
+        sfServer.startServer();//args[0],args[1],args[2]);
     }
 }
