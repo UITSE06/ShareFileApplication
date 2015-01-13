@@ -15,10 +15,11 @@ public class ShareFileServer
 			
 			FileManagementServicesImpl fms = new FileManagementServicesImpl();
 			//create registry on port 1099
-			Registry regis = LocateRegistry.createRegistry(1993);
-			System.setProperty("java.rmi.server.hostname", "127.0.0.1");
+			Registry regis = LocateRegistry.createRegistry(1099);
+			//System.setProperty("java.rmi.server.hostname", serverIP);
 			//create a new service
 			regis.rebind("FileManagementServices", fms);
+			//Naming.rebind(String.format("rmi://127.0.0.1:%s/FileManagementServices", 1996), fms);
 			System.out.println("Server started!");
 			
 			String rs = fms.Login("quanta", "anhquan");

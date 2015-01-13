@@ -23,4 +23,5 @@ public interface FileManagementServices extends Remote {
 	public int InsertFileInfo(String userName, FileDTO fileDetail) throws RemoteException;
 	//login
 	public String Login(String userName, String passWord) throws RemoteException;
+	public String hello() throws RemoteException;
 }

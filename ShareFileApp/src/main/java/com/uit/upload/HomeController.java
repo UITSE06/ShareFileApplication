@@ -3,7 +3,6 @@ package com.uit.upload;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -51,14 +50,15 @@ public class HomeController {
 	private FileManagementServices fmServiceInterface;
 	private String currentUserName = "";
 
-	@RequestMapping(value = "/", method = RequestMethod.GET)
+	@RequestMapping(value = "/home", method = RequestMethod.GET)
 	public String home(HttpServletResponse response) {
-		try {
+		/*try {
 
-			// fire to localhost port 1993
-			//System.setProperty("java.rmi.server.hostname", "54.169.37.221");
-			Registry myRegis = LocateRegistry.getRegistry("127.0.0.1", 1993);
-			//Registry myRegis = LocateRegistry.getRegistry("127.0.0.1", 1993);	
+			// fire to 
+			Registry myRegis = LocateRegistry.getRegistry("192.168.137.161");
+			//Registry myRegis = LocateRegistry.getRegistry("54.169.147.49");
+			//Registry myRegis = LocateRegistry.getRegistry("54.169.230.143");
+			//Registry myRegis = LocateRegistry.getRegistry("54.169.102.72");
 			// search for FileManagementServices
 			fmServiceInterface = (FileManagementServices) myRegis
 					.lookup("FileManagementServices");
@@ -67,16 +67,39 @@ public class HomeController {
 			} else {
 				logger.info("Server FileManagementServices not found!");
 			}
-			logger.info("home page");
+			//logger.info("home page");
+			
+			logger.info(fmServiceInterface.hello());
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
+		}*/
 
 		return "index";
 	}
 
-	@RequestMapping(value = "/login", method = RequestMethod.GET)
+	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public String Login(HttpServletResponse response) {
+		try {
+
+			// fire to 
+			Registry myRegis = LocateRegistry.getRegistry("192.168.137.161");
+			//Registry myRegis = LocateRegistry.getRegistry("54.169.147.49");
+			//Registry myRegis = LocateRegistry.getRegistry("54.169.230.143");
+			//Registry myRegis = LocateRegistry.getRegistry("54.169.102.72");
+			// search for FileManagementServices
+			fmServiceInterface = (FileManagementServices) myRegis
+					.lookup("FileManagementServices");
+			if (fmServiceInterface != null) {
+				logger.info("Found server FileManagementServices!");
+			} else {
+				logger.info("Server FileManagementServices not found!");
+			}
+			//logger.info("home page");
+			
+			logger.info(fmServiceInterface.hello());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return "login";
 	}
 
@@ -174,27 +197,8 @@ public class HomeController {
 			str += sb.toString();
 		}
 		str += "]";
-		// System.out.println(str);
 		return str;
 	}
-
-	/*
-	 * @RequestMapping(value = "/download", method = RequestMethod.GET) public
-	 * String downloadFile(@RequestParam(value = "fileName") String fileName) //
-	 * @RequestParam(value = "myfile") String saveTo) throws IOException,
-	 * JSONException { try { byte[] filedata =
-	 * fmServiceInterface.downloadFile(fileName); if (filedata != null) { String
-	 * catalinaHome = System.getProperty("catalina.home"); String path =
-	 * catalinaHome + "\\FileDownload\\";
-	 * 
-	 * //File folder = new File(path); //File[] listOfFile = folder.listFiles();
-	 * BufferedOutputStream output = new BufferedOutputStream( new
-	 * FileOutputStream(path + fileName)); output.write(filedata, 0,
-	 * filedata.length); output.flush(); output.close();
-	 * System.out.println("file is downloaded!"); } } catch (Exception e) {
-	 * System.err.println("FileServer exception: " + e.getMessage());
-	 * e.printStackTrace(); } return "index"; }
-	 */
 
 	@RequestMapping(value = "/download", method = RequestMethod.GET)
 	public ModelAndView downloadFile(HttpServletRequest request,
