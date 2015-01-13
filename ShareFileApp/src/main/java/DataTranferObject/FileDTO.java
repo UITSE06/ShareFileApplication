@@ -10,7 +10,7 @@ public class FileDTO implements Serializable {
 	private static final long serialVersionUID = 1L;
 	int fileId;
 	int fileStateId;
-	int userId;
+	String username;
 	String fileName;
 	String urlFile;
 	int fileRoleId;
@@ -25,11 +25,11 @@ public class FileDTO implements Serializable {
 	public void setFileStateId(int fileStateId) {
 		this.fileStateId = fileStateId;
 	}
-	public int getUserId() {
-		return userId;
+	public String getUserName() {
+		return username;
 	}
-	public void setUserId(int userId) {
-		this.userId = userId;
+	public void setUserName(String userId) {
+		this.username = userId;
 	}
 	public int getFileId() {
 		return fileId;

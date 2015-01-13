@@ -8,7 +8,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -88,12 +87,12 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 
 	public int InsertFileInfo(String userName, FileDTO fileDetail)
 			throws RemoteException {
-		String sqlInsertFile = "INSERT INTO `file` (`filename`, `user_id`, `file_state_id`, `urlfile`, `file_role_id`, `dateupload`, `size`, `checksum`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+		String sqlInsertFile = "INSERT INTO `file` (`filename`, `username`, `file_state_id`, `urlfile`, `file_role_id`, `dateupload`, `size`, `checksum`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 		try {
 			PreparedStatement statement = connectDB
 					.GetPrepareStatement(sqlInsertFile);
 			statement.setString(1, fileDetail.getFileName());
-			statement.setInt(2, fileDetail.getUserId());
+			statement.setString(2, fileDetail.getUserName());
 			statement.setInt(3, fileDetail.getFileStateId());
 			statement.setString(4, fileDetail.getUrlFile());
 			statement.setInt(5, fileDetail.getFileRoleId());
@@ -101,7 +100,7 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 			statement.setLong(7, fileDetail.getSize());
 			statement.setString(8, fileDetail.getCheckSum());
 			if (!statement.execute()) {// it's a insert sql, so this function
-									   // return false if it execute success
+										// return false if it execute success
 				return 1;
 			}
 		} catch (SQLException e) {
@@ -152,13 +151,43 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 	}
 
 	@Override
-	public ArrayList<String> getListOfFile() throws RemoteException {
+	public ArrayList<String> getListOfFile(String userName)
+			throws RemoteException {
+
+		ArrayList<String> fileOfUser = new ArrayList<String>();
+		
+		// get list file of user from database
+		String sqlInsertFile = "SELECT filename FROM `file` WHERE `username` = ?";
+		try {
+			PreparedStatement statement = connectDB
+					.GetPrepareStatement(sqlInsertFile);
+			statement.setString(1, userName);
+			ResultSet rs = statement.executeQuery();
+			while (rs.next()) {
+				fileOfUser.add(rs.getString(1));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			try {
+				connectDB.Close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+
+		//check if have any file of user, if have, return it
 		ArrayList<String> rs = new ArrayList<String>();
 		if (Files.exists(Paths.get("FileUploaded"))) {
 			File folder = new File("FileUploaded/");
 			File[] listOfFile = folder.listFiles();
 			for (File file : listOfFile) {
-				rs.add(file.getName());
+				if(fileOfUser.contains(file.getName())){
+					rs.add(file.getName());			
+				}
 			}
 			return rs;
 		}
@@ -168,6 +197,6 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 	@Override
 	public String hello() throws RemoteException {
 		// TODO Auto-generated method stub
-		return "anhquanjbggub";
+		return "Hi client!";
 	}
 }

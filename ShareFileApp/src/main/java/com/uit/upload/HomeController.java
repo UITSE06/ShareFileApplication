@@ -81,8 +81,9 @@ public class HomeController {
 	public String Login(HttpServletResponse response) {
 		try {
 
-			// fire to 
-			Registry myRegis = LocateRegistry.getRegistry("192.168.137.161");
+			// fire to
+			Registry myRegis = LocateRegistry.getRegistry("127.0.0.1");
+			//Registry myRegis = LocateRegistry.getRegistry("192.168.137.161");
 			//Registry myRegis = LocateRegistry.getRegistry("54.169.147.49");
 			//Registry myRegis = LocateRegistry.getRegistry("54.169.230.143");
 			//Registry myRegis = LocateRegistry.getRegistry("54.169.102.72");
@@ -173,7 +174,7 @@ public class HomeController {
 
 		String str = "";
 
-		ArrayList<String> listFileName = fmServiceInterface.getListOfFile();
+		ArrayList<String> listFileName = fmServiceInterface.getListOfFile(currentUserName);
 		str += "[";
 		if (listFileName == null) {
 			return "";
@@ -234,7 +235,7 @@ public class HomeController {
 		fileDetail.setSize(file.getSize());
 		fileDetail.setFileStateId(1);
 		fileDetail.setUrlFile("/path");
-		fileDetail.setUserId(1);
+		fileDetail.setUserName(currentUserName);
 		int rs = fmServiceInterface.InsertFileInfo(currentUserName, fileDetail);
 		if (rs == 1) {
 			logger.info("Insert Database success!" + rs);

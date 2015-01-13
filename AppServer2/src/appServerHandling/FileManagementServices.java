@@ -19,7 +19,7 @@ public interface FileManagementServices extends Remote {
 	//download file
 	public byte[] downloadFile(String fileName) throws RemoteException;
 	//get list of file uploaded
-	public ArrayList<String> getListOfFile() throws RemoteException;	
+	public ArrayList<String> getListOfFile(String userName) throws RemoteException;	
 	//insert file info to database
 	public int InsertFileInfo(String userName, FileDTO fileDetail) throws RemoteException;
 	//login
