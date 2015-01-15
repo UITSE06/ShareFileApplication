@@ -54,9 +54,9 @@ public class HomeController {
 		try {
 
 			// fire to
-			//Registry myRegis = LocateRegistry.getRegistry("127.0.0.1");
+			Registry myRegis = LocateRegistry.getRegistry("127.0.0.1");
 			//System.setProperty("java.rmi.server.hostname", "104.155.199.62");
-			Registry myRegis = LocateRegistry.getRegistry("104.155.199.62");
+			//Registry myRegis = LocateRegistry.getRegistry("104.155.199.62");
 			//Registry myRegis = LocateRegistry.getRegistry("192.168.137.161");
 			//Registry myRegis = LocateRegistry.getRegistry("104.46.63.42");		
 			//Registry myRegis = LocateRegistry.getRegistry("54.169.102.72");
@@ -217,19 +217,18 @@ public class HomeController {
 		// process only if it's not empty
 		if (!isEmptyFile) {
 			try {
-				fmServiceInterface.sendFileNameToServer(file
-						.getOriginalFilename());
+				int thread = fmServiceInterface.sendFileNameToServer(file.getOriginalFilename());
 
 				byte[] data = new byte[8192];
 				int byteReads;
 				InputStream is = file.getInputStream();
 				byteReads = is.read(data);
 				while (byteReads != -1) {
-					fmServiceInterface.sendDataToServer(data, 0, byteReads);
+					fmServiceInterface.sendDataToServer(data, 0, byteReads, thread);
 					byteReads = is.read(data);
 				}
 				is.close();
-				fmServiceInterface.finishUpload();
+				fmServiceInterface.finishUpload(file.getOriginalFilename(), thread);
 				System.out.println("File upload success!");
 			} catch (Exception e) {
 				e.printStackTrace();

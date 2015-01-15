@@ -13,9 +13,9 @@ import java.util.ArrayList;
 import DataTranferObject.*;
 public interface FileManagementServices extends Remote {
 	//upload file
-	public void sendFileNameToServer(String fileName) throws RemoteException;
-	public void sendDataToServer(byte[] data, int offset, int length) throws RemoteException;
-	public boolean finishUpload() throws RemoteException;
+	public int sendFileNameToServer(String fileName) throws RemoteException;
+	public void sendDataToServer(byte[] data, int offset, int length, int thread) throws RemoteException;
+	public boolean finishUpload(String fileName, int thread) throws RemoteException;
 	//download file
 	public byte[] downloadFile(String fileName) throws RemoteException;
 	//get list of file uploaded

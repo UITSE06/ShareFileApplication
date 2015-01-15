@@ -12,10 +12,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import DataTranferObject.FileDTO;
 
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
 public class FileManagementServicesImpl extends UnicastRemoteObject implements
@@ -24,35 +27,56 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 	/**
 	 * 
 	 */
+	final int MAXTHREAD = 10;
+
 	private static final long serialVersionUID = 1L;
 	private ConnectDatatbase connectDB = new ConnectDatatbase();
-	private FileOutputStream fout = null;
-	private String fileNameUploaded = "";
+	// private FileOutputStream fout = null;
+	private HashMap<Integer, FileOutputStream> listThread;
+	private ArrayList<Integer> listFreeThread;
+	private int index = 0;
 
 	public FileManagementServicesImpl() throws RemoteException {
 		super();
+		listThread = new HashMap<Integer, FileOutputStream>();
+		listFreeThread = new ArrayList<Integer>();
+
 		// TODO Auto-generated constructor stub
 	}
 
-	public void sendFileNameToServer(String fileName) throws RemoteException {
+	public int sendFileNameToServer(String fileName) throws RemoteException {
 		try {
 			if (Files.notExists(Paths.get("FileUploaded"))) {
 				Files.createDirectories(Paths.get("FileUploaded"));
 			}
-			fout = new FileOutputStream("FileUploaded/" + fileName);
-			fileNameUploaded = fileName;
+			if (listThread.size() < MAXTHREAD) {
+				index++;
+				FileOutputStream fout = new FileOutputStream("FileUploaded/"
+						+ fileName);
+				listThread.put(index, fout);
+				return index;
+			} else if (listFreeThread.size() != 0) {
+				int thread = listFreeThread.get(0);
+				listFreeThread.remove(0);
+				FileOutputStream fout = new FileOutputStream("FileUploaded/"
+						+ fileName);
+				listThread.put(thread, fout);
+				return thread;
+			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return -1;
 	}
 
-	public void sendDataToServer(byte[] data, int offset, int length)
+	public void sendDataToServer(byte[] data, int offset, int length, int thread)
 			throws RemoteException {
-		if (fout != null) {
+		if (thread != -1) {
 			try {
+				FileOutputStream fout = listThread.get(thread);
 				fout.write(data, offset, length);
 				fout.flush();
 			} catch (IOException e) {
@@ -61,19 +85,21 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 		}
 	}
 
-	public boolean finishUpload() throws RemoteException {
-		if (fout != null) {
+	public boolean finishUpload(String fileName, int thread) throws RemoteException {
+		if (thread != -1) {
 			try {
-				fout.close();
-				//update database, update status of file: uploaded
+				listThread.get(thread).close();
+				listFreeThread.add(thread);
+				// update database, update status of file: uploaded
 				String sqlInsertFile = "UPDATE `file` SET `file_state_id` = 2 WHERE `filename` = ?";
 				try {
-					PreparedStatement statement = connectDB.GetPrepareStatement(sqlInsertFile);
-					statement.setString(1, fileNameUploaded);
-					//boolean rs = statement.execute();
+					PreparedStatement statement = connectDB
+							.GetPrepareStatement(sqlInsertFile);
+					statement.setString(1, fileName);
+					// boolean rs = statement.execute();
 					if (!statement.execute()) {
-						//upload file to others server
-						transferFileToOthers();
+						// upload file to others server
+						// transferFileToOthers();
 						return true;
 					}
 					return false;
@@ -88,24 +114,31 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
-				return false;				
+				return false;
 			}
 		}
 		return false;
 	}
-	
-	public int transferFileToOthers(){
-		//read all available server IP
+
+	public int transferFileToOthers() {
+		// read all available server IP
 		String sqlInsertFile = "SELECT `IP_server` FROM `server`";
 		try {
-			PreparedStatement statement = connectDB.GetPrepareStatement(sqlInsertFile);
+			PreparedStatement statement = connectDB
+					.GetPrepareStatement(sqlInsertFile);
 			ResultSet rs = statement.executeQuery();
 			while (rs.next()) {
-				//upload file to others server
-				
-				//return true;
+				// upload file to others server
+				Registry myRegis = LocateRegistry.getRegistry(rs.getString(1));
+
+				// search for FileManagementServices
+				FileManagementServices fmServiceInterface = (FileManagementServices) myRegis
+						.lookup("FileManagementServices");
+				if (fmServiceInterface != null) {
+					// return true;
+				}
 			}
-			//return false;
+			// return false;
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -204,7 +237,7 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 			throws RemoteException {
 
 		ArrayList<String> fileOfUser = new ArrayList<String>();
-		
+
 		// get list file of user from database
 		String sqlInsertFile = "SELECT filename FROM `file` WHERE `username` = ?";
 		try {
@@ -228,14 +261,14 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 			}
 		}
 
-		//check if have any file of user, if have, return it
+		// check if have any file of user, if have, return it
 		ArrayList<String> rs = new ArrayList<String>();
 		if (Files.exists(Paths.get("FileUploaded"))) {
 			File folder = new File("FileUploaded/");
 			File[] listOfFile = folder.listFiles();
 			for (File file : listOfFile) {
-				if(fileOfUser.contains(file.getName())){
-					rs.add(file.getName());			
+				if (fileOfUser.contains(file.getName())) {
+					rs.add(file.getName());
 				}
 			}
 			return rs;
