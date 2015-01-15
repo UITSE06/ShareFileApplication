@@ -1,0 +1,66 @@
+@CHARSET "ISO-8859-1";
+
+#mfHeader{
+	margin-left: 220px;
+	background: none repeat scroll 0 0 #eaeaea;
+	height: 70px;
+}
+
+#logo{
+	margin-left: 10px;
+    padding-top: 1px;
+    width: 200px;
+}
+#uploadArea{
+	margin-left: 200px;
+    margin-top: -45px;
+}
+
+#searchField{
+    margin-left: 565px;
+    margin-top: -42px;
+    width: 260px;
+}
+
+.btn-file {
+  position: relative;
+  overflow: hidden;
+}
+.btn-file input[type=file] {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 100%;
+  min-height: 100%;
+  font-size: 100px;
+  text-align: right;
+  filter: alpha(opacity=0);
+  opacity: 0;
+  background: red;
+  cursor: inherit;
+  display: block;
+}
+input[readonly] {
+  background-color: white !important;
+  cursor: text !important;
+}
+
+#UploadForm{
+	width: 500px;
+}
+
+#btnSubmit{
+    margin-left: 495px;
+    margin-top: -30px;
+}
+
+#message{
+	margin-left: 503px;
+	margin-top: -9px;
+}
+
+#mfMain{
+	margin-left: 230px;
+    padding-top: 10px;
+    width: 1000px;
+}
