@@ -10,23 +10,7 @@
 <link rel="stylesheet" href="<c:url value ="/resources/css/bootstrap.min.css"/>" type="text/css">
 </head>
 <body>
-<!-- <form class = "form form-horizontal" action ="submitLogin" method="POST">
-<table>
-	<tr>
-		<td>User name </td> 
-		<td> <input type = "text" name="userName"> </td>
-	</tr>
-	<tr>
-		<td>Pass </td> 
-		<td> <input type = "password" name="pass"> </td>
-	</tr>
-	<tr>
-		<td>  </td>
-		<td> <input class="btn btn-primary" type = "submit" value = "Login"> 
-		<input class="btn btn-default" type = "button" value = "Cancel"> </td>
-	</tr>
-</table>
-</form>-->
+
 
 <form class="form-horizontal" action ="submitLogin" method="POST" style="width: 400px; padding-top: 100px; margin: auto;">
   <div class="form-group">

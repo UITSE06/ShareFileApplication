@@ -27,6 +27,7 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 	private static final long serialVersionUID = 1L;
 	private ConnectDatatbase connectDB = new ConnectDatatbase();
 	private FileOutputStream fout = null;
+	private String fileNameUploaded = "";
 
 	public FileManagementServicesImpl() throws RemoteException {
 		super();
@@ -39,6 +40,7 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 				Files.createDirectories(Paths.get("FileUploaded"));
 			}
 			fout = new FileOutputStream("FileUploaded/" + fileName);
+			fileNameUploaded = fileName;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -59,14 +61,61 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 		}
 	}
 
-	public void finishUpload() throws RemoteException {
+	public boolean finishUpload() throws RemoteException {
 		if (fout != null) {
 			try {
 				fout.close();
+				//update database, update status of file: uploaded
+				String sqlInsertFile = "UPDATE `file` SET `file_state_id` = 2 WHERE `filename` = ?";
+				try {
+					PreparedStatement statement = connectDB.GetPrepareStatement(sqlInsertFile);
+					statement.setString(1, fileNameUploaded);
+					//boolean rs = statement.execute();
+					if (!statement.execute()) {
+						//upload file to others server
+						transferFileToOthers();
+						return true;
+					}
+					return false;
+				} catch (Exception e) {
+					e.printStackTrace();
+				} finally {
+					try {
+						connectDB.Close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
 			} catch (IOException e) {
+				e.printStackTrace();
+				return false;				
+			}
+		}
+		return false;
+	}
+	
+	public int transferFileToOthers(){
+		//read all available server IP
+		String sqlInsertFile = "SELECT `IP_server` FROM `server`";
+		try {
+			PreparedStatement statement = connectDB.GetPrepareStatement(sqlInsertFile);
+			ResultSet rs = statement.executeQuery();
+			while (rs.next()) {
+				//upload file to others server
+				
+				//return true;
+			}
+			//return false;
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				connectDB.Close();
+			} catch (SQLException e) {
 				e.printStackTrace();
 			}
 		}
+		return 1;
 	}
 
 	public byte[] downloadFile(String fileName) {

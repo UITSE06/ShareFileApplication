@@ -2,7 +2,6 @@ package com.uit.upload;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -16,11 +15,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
-import org.springframework.http.converter.AbstractHttpMessageConverter;
-import org.springframework.http.converter.HttpMessageNotWritableException;
-import org.springframework.http.converter.StringHttpMessageConverter;
-import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,42 +44,21 @@ public class HomeController {
 	private FileManagementServices fmServiceInterface;
 	private String currentUserName = "";
 
-	@RequestMapping(value = "/home", method = RequestMethod.GET)
+	/*@RequestMapping(value = "/home", method = RequestMethod.GET)
 	public String home(HttpServletResponse response) {
-		/*try {
-
-			// fire to 
-			Registry myRegis = LocateRegistry.getRegistry("192.168.137.161");
-			//Registry myRegis = LocateRegistry.getRegistry("54.169.147.49");
-			//Registry myRegis = LocateRegistry.getRegistry("54.169.230.143");
-			//Registry myRegis = LocateRegistry.getRegistry("54.169.102.72");
-			// search for FileManagementServices
-			fmServiceInterface = (FileManagementServices) myRegis
-					.lookup("FileManagementServices");
-			if (fmServiceInterface != null) {
-				logger.info("Found server FileManagementServices!");
-			} else {
-				logger.info("Server FileManagementServices not found!");
-			}
-			//logger.info("home page");
-			
-			logger.info(fmServiceInterface.hello());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}*/
-
 		return "index";
-	}
+	}*/
 
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public String Login(HttpServletResponse response) {
 		try {
 
 			// fire to
-			Registry myRegis = LocateRegistry.getRegistry("127.0.0.1");
+			//Registry myRegis = LocateRegistry.getRegistry("127.0.0.1");
+			//System.setProperty("java.rmi.server.hostname", "104.155.199.62");
+			Registry myRegis = LocateRegistry.getRegistry("104.155.199.62");
 			//Registry myRegis = LocateRegistry.getRegistry("192.168.137.161");
-			//Registry myRegis = LocateRegistry.getRegistry("54.169.147.49");
-			//Registry myRegis = LocateRegistry.getRegistry("54.169.230.143");
+			//Registry myRegis = LocateRegistry.getRegistry("104.46.63.42");		
 			//Registry myRegis = LocateRegistry.getRegistry("54.169.102.72");
 			// search for FileManagementServices
 			fmServiceInterface = (FileManagementServices) myRegis
@@ -112,8 +85,7 @@ public class HomeController {
 			String pass = request.getParameter("pass");
 			if (username == null || pass == null) {
 				return "login";
-			}
-			currentUserName = fmServiceInterface.Login(username, pass);
+			}			currentUserName = fmServiceInterface.Login(username, pass);
 			if (username.equals(currentUserName)) {
 				return "index";
 			}
@@ -124,7 +96,7 @@ public class HomeController {
 		return "login";
 	}
 
-	@RequestMapping(value = "/multiPartFileSingle", method = RequestMethod.POST)
+	/*@RequestMapping(value = "/multiPartFileSingle", method = RequestMethod.POST)
 	public void uploadFile(HttpServletResponse response,
 			@RequestParam(value = "file") MultipartFile file) {
 
@@ -166,7 +138,7 @@ public class HomeController {
 				p_Nwe.printStackTrace();
 			}
 		}
-	}
+	}*/
 
 	@RequestMapping(value = "/getFile", method = RequestMethod.POST)
 	public final @ResponseBody String getFile() throws IOException,
