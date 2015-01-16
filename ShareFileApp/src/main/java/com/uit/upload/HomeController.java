@@ -72,8 +72,8 @@ public class HomeController {
 		try {
 
 			// fire to
-			 Registry myRegis = LocateRegistry.getRegistry("127.0.0.1");
-			// Registry myRegis = LocateRegistry.getRegistry("104.155.199.62");
+			// Registry myRegis = LocateRegistry.getRegistry("127.0.0.1");
+			 Registry myRegis = LocateRegistry.getRegistry("104.155.199.62");
 			// Registry myRegis = LocateRegistry.getRegistry("192.168.137.161");
 			// Registry myRegis = LocateRegistry.getRegistry("104.46.63.42");
 			// Registry myRegis = LocateRegistry.getRegistry("54.169.102.72");
