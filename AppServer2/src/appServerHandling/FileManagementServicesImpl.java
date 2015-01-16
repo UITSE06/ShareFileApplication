@@ -6,6 +6,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.PreparedStatement;
@@ -43,24 +45,44 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 
 		// TODO Auto-generated constructor stub
 	}
+	
+	////
+	public OutputStream getOutputStream(File f) throws IOException {
+	    return new RMIOutputStream(new RMIOutputStreamImpl(new 
+	    FileOutputStream(f)));
+	}
 
-	public int sendFileNameToServer(String fileName) throws RemoteException {
+	public InputStream getInputStream(File f) throws IOException {
+	    return new RMIInputStream(new RMIInputStreamImpl(new 
+	    FileInputStream(f)));
+	}
+	////
+
+	public int sendFileInfoToServer(FileDTO fileDetail) throws RemoteException {
 		try {
-			if (Files.notExists(Paths.get("FileUploaded"))) {
-				Files.createDirectories(Paths.get("FileUploaded"));
+			String userName = fileDetail.getUserName();
+			String fileName = fileDetail.getFileName();
+			if (Files.notExists(Paths.get(userName))) {
+				Files.createDirectories(Paths.get(userName));
 			}
 			if (listThread.size() < MAXTHREAD) {
 				index++;
-				FileOutputStream fout = new FileOutputStream("FileUploaded/"
-						+ fileName);
+				FileOutputStream fout =
+						new FileOutputStream(userName + "/"	+ fileName);
 				listThread.put(index, fout);
+				
+				//insert file info to database
+				InsertFileInfo(fileDetail);
 				return index;
-			} else if (listFreeThread.size() != 0) {
-				int thread = listFreeThread.get(0);
-				listFreeThread.remove(0);
-				FileOutputStream fout = new FileOutputStream("FileUploaded/"
-						+ fileName);
+			} else if (listFreeThread.size() != 0) {//have a free thread?
+				int thread = listFreeThread.get(0);//get thread ID
+				listFreeThread.remove(0);//thread will busy, so remove it from free list
+				FileOutputStream fout = 
+						new FileOutputStream(userName + "/"	+ fileName);
 				listThread.put(thread, fout);
+				
+				//insert file info to database
+				InsertFileInfo(fileDetail);
 				return thread;
 			}
 		} catch (FileNotFoundException e) {
@@ -79,6 +101,7 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 				FileOutputStream fout = listThread.get(thread);
 				fout.write(data, offset, length);
 				fout.flush();
+				
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -151,26 +174,27 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 		return 1;
 	}
 
-	public byte[] downloadFile(String fileName) {
+	public byte[] downloadFile(String fileName, String userName) {
 		try {
-			File file = new File("FileUploaded/" + fileName);
+			File file = new File(userName + "/" + fileName);
 			byte buffer[] = new byte[(int) file.length()];
 			BufferedInputStream input = new BufferedInputStream(
-					new FileInputStream("FileUploaded/" + fileName));
+					new FileInputStream(userName + "/" + fileName));
 			input.read(buffer, 0, buffer.length);
 			input.close();
 			return (buffer);
 		} catch (Exception e) {
-			System.out.println("FileManegementServicesImpl: " + e.getMessage());
-			e.printStackTrace();
+			System.out.println("Server download file: " + e.getMessage());
 			return (null);
 		}
 	}
 
-	public int InsertFileInfo(String userName, FileDTO fileDetail)
-			throws RemoteException {
-		String sqlInsertFile = "INSERT INTO `file` (`filename`, `username`, `file_state_id`, `urlfile`, `file_role_id`, `dateupload`, `size`, `checksum`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+	public boolean InsertFileInfo(FileDTO fileDetail) {
+		
 		try {
+			String sqlInsertFile = "INSERT INTO `file` (`filename`, `username`, `file_state_id`, "
+					+ "`urlfile`, `file_role_id`, `dateupload`, `size`, `checksum`) "
+					+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 			PreparedStatement statement = connectDB
 					.GetPrepareStatement(sqlInsertFile);
 			statement.setString(1, fileDetail.getFileName());
@@ -183,11 +207,8 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 			statement.setString(8, fileDetail.getCheckSum());
 			if (!statement.execute()) {// it's a insert sql, so this function
 										// return false if it execute success
-				return 1;
+				return true;
 			}
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -199,7 +220,7 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 				e.printStackTrace();
 			}
 		}
-		return 0;
+		return false ;
 	}
 
 	public String Login(String userName, String passWord)
@@ -248,10 +269,7 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 			while (rs.next()) {
 				fileOfUser.add(rs.getString(1));
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
 			try {
@@ -263,8 +281,8 @@ public class FileManagementServicesImpl extends UnicastRemoteObject implements
 
 		// check if have any file of user, if have, return it
 		ArrayList<String> rs = new ArrayList<String>();
-		if (Files.exists(Paths.get("FileUploaded"))) {
-			File folder = new File("FileUploaded/");
+		if (Files.exists(Paths.get(userName))) {
+			File folder = new File(userName + "/");
 			File[] listOfFile = folder.listFiles();
 			for (File file : listOfFile) {
 				if (fileOfUser.contains(file.getName())) {

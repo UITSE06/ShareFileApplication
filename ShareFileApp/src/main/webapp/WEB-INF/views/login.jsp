@@ -12,7 +12,7 @@
 <body>
 
 
-<form class="form-horizontal" action ="submitLogin" method="POST" style="width: 400px; padding-top: 100px; margin: auto;">
+<form class="form-horizontal" action ="home" method="POST" style="width: 400px; padding-top: 100px; margin: auto;">
   <div class="form-group">
     <label for="inputEmail3" class="col-sm-2 control-label">Username</label>
     <div class="col-sm-10">
