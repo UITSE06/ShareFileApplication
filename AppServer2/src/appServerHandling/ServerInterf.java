@@ -17,7 +17,10 @@ public interface ServerInterf extends Remote {
 	public boolean finishUpload(FileDTO fileDetail, int thread)
 			throws RemoteException;
 	public int getLatestFileId() throws RemoteException;
-
+	
+	//transfer file to others server
+	public boolean finishTransferOneServer(final FileDTO fileDetail, int thread)
+			throws RemoteException;
 	// download file
 	public byte[] downloadFile(String fileTitle, String userName)
 			throws RemoteException;

@@ -36,11 +36,6 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 	private ArrayList<Integer> listFreeThreadUpload;
 	private int indexUpload = 0;
 
-	/*
-	 * private HashMap<Integer, BufferedInputStream> listThreadDownload; private
-	 * ArrayList<Integer> listFreeThreadDownload; private int indexDownload = 0;
-	 */
-
 	public void start() throws Exception {
 		rmiRegistry = LocateRegistry.createRegistry(1099);
 		rmiRegistry.bind("server", this);
@@ -79,9 +74,8 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 				}
 			} else if (listFreeThreadUpload.size() != 0) {// have a free thread?
 				int thread = listFreeThreadUpload.get(0);// get thread ID
-				listFreeThreadUpload.remove(0);// thread will busy, so remove it
-												// from
-												// free list
+				// thread will busy, so remove it from free list
+				listFreeThreadUpload.remove(0);
 				FileOutputStream fout = new FileOutputStream(userName + "/"
 						+ fileDetail.getFileTitle());
 				listThreadUpload.put(thread, fout);
@@ -292,8 +286,9 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 			statement.setString(1, userName);
 			statement.setString(2, fileName);
 			ResultSet rs = statement.executeQuery();
-			if (rs.next()) {// had have file
+			if (rs.next()) {// had have file in database
 				connectDB.Close();
+				//check file on disk
 				return true;
 			}
 		} catch (Exception ex) {
@@ -355,7 +350,7 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 						fis.close();
 
 						// finish upload and update file's state to Uploaded
-						if (serverI.finishUpload(fileDetail, thread)) {
+						if (serverI.finishTransferOneServer(fileDetail, thread)) {
 							System.out.println("transfer file success + 1");
 							numServer++;
 						}
@@ -375,6 +370,35 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 		return 0;
 	}
 
+	public boolean finishTransferOneServer(final FileDTO fileDetail, int thread)
+			throws RemoteException {
+		if (thread != -1) {
+			try {
+				listThreadUpload.get(thread).close();
+				listFreeThreadUpload.add(thread);
+				System.out.println("upload file done!");
+				// update database, update status of file: uploaded
+				String sql = "UPDATE `file` SET `file_state_id` = 2 WHERE `filename` = ?";
+				PreparedStatement statement = connectDB
+						.GetPrepareStatement(sql);
+				statement.setString(1, fileDetail.getFileName());
+				if (!statement.execute()) {
+					return true;
+				}
+				return false;
+			} catch (Exception e) {
+				e.printStackTrace();
+			} finally {
+				try {
+					connectDB.Close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return false;
+	}
+	
 	public String Login(String userName, String passWord)
 			throws RemoteException {
 		try {
@@ -460,7 +484,6 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 
 	@Override
 	public String hello() throws RemoteException {
-		// TODO Auto-generated method stub
 		return "Hi client!";
 	}
 }

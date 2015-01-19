@@ -12,6 +12,7 @@ import java.util.HashMap;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.json.JSONException;
 import org.slf4j.Logger;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -39,6 +41,8 @@ public class HomeController {
 			.getLogger(HomeController.class);
 
 	private ServerInterf serverI;
+
+	// private MySessionCounter msc = new MySessionCounter();
 
 	public ServerInterf getServerInterf() {
 		return serverI;
@@ -62,6 +66,8 @@ public class HomeController {
 			if (serverI != null) {
 				logger.info("Found server FileManagementServices!");
 				logger.info(serverI.hello());
+				logger.info("Active Session"
+						+ MySessionCounter.getActiveSessions());
 			} else {
 				logger.info("Server FileManagementServices not found!");
 			}
@@ -72,22 +78,66 @@ public class HomeController {
 		return "login";
 	}
 
+	@RequestMapping(value = "/home", method = RequestMethod.GET)
+	public ModelAndView Welcome(HttpServletRequest request, HttpSession session) {
+
+		ModelAndView modelAndView = new ModelAndView();
+		String userSession = (String) session.getAttribute("userName");
+		if (userSession == null) {
+			modelAndView.setViewName("login");
+		} else {
+			modelAndView.addObject("userName", userSession);
+			modelAndView.setViewName("index");
+		}
+
+		return modelAndView;
+	}
+
 	@RequestMapping(value = "/home", method = RequestMethod.POST)
-	public String LoginConfirm(HttpServletRequest request) {
+	public ModelAndView LoginConfirm(HttpServletRequest request) {
+
+		ModelAndView modelAndView = new ModelAndView();
+		modelAndView.setViewName("login");
 		try {
 			String username = request.getParameter("userName");
+
 			String pass = request.getParameter("pass");
 			if (username == null || pass == null) {
-				return "login";
+				modelAndView.setViewName("login");
+				modelAndView.addObject("message",
+						"Please input User name and Password!");
+				return modelAndView;
 			}
 			currentUserName = serverI.Login(username, pass);
 			if (username.equals(currentUserName)) {
-				return "index";
+				modelAndView.addObject("userName", username);
+				modelAndView.setViewName("index");
+				return modelAndView;
+			} else {
+				modelAndView.setViewName("login");
+				modelAndView.addObject("message", "Login failed!");
+				return modelAndView;
 			}
 		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return "login";
+		return modelAndView;
+	}
+
+	@RequestMapping(value = "/clearSession", method = RequestMethod.POST)
+	public ModelAndView ClearSession(HttpServletRequest request,
+			HttpSession session, SessionStatus status) {
+		try {
+			status.setComplete();
+			session.removeAttribute("userName");
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}
+		ModelAndView modelAndView = new ModelAndView();
+		modelAndView.setViewName("login");
+		return modelAndView;
 	}
 
 	@RequestMapping(value = "/getFile", method = RequestMethod.POST)
@@ -149,6 +199,9 @@ public class HomeController {
 			HttpServletResponse response) throws Exception {
 
 		String fileTitle = request.getParameter("fileTitle");
+
+		// return a link to another server
+
 		byte[] fileData = serverI.downloadFile(fileTitle, currentUserName);
 
 		// get file name by file title
@@ -190,9 +243,10 @@ public class HomeController {
 					return;
 				}
 				// get the extend of file, ex: music.mp3
-				String fileExt = "." + file.getOriginalFilename().split("\\.")[1];
+				String fileExt = "."
+						+ file.getOriginalFilename().split("\\.")[1];
 				String fileTitle = currentUserName + latestFileId + fileExt;
-			    fileDetail.setFileTitle(fileTitle);
+				fileDetail.setFileTitle(fileTitle);
 				// roleId = 1 , default role is private
 				fileDetail.setFileRoleId(1);
 				fileDetail.setSize(file.getSize());
