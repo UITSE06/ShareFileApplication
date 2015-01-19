@@ -12,12 +12,20 @@ public class FileDTO implements Serializable {
 	int fileStateId;
 	String username;
 	String fileName;
+	String fileTitle;
 	String urlFile;
 	int fileRoleId;
 	Date dateUpload;
 	long size;
 	String checkSum;
 	
+	
+	public String getFileTitle() {
+		return fileTitle;
+	}
+	public void setFileTitle(String fileTitle) {
+		this.fileTitle = fileTitle;
+	}
 	
 	public int getFileStateId() {
 		return fileStateId;

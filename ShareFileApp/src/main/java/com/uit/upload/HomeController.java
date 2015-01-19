@@ -1,12 +1,13 @@
 package com.uit.upload;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -25,7 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
 import DataTranferObject.FileDTO;
-import appServerHandling.FileManagementServices;
+import appServerHandling.*;
 
 /**
  * Handles requests for the application home page. This comment is added by Anh
@@ -37,30 +38,13 @@ public class HomeController {
 	private static final Logger logger = LoggerFactory
 			.getLogger(HomeController.class);
 
-	private FileManagementServices fmServiceInterface;
+	private ServerInterf serverI;
 
-	public FileManagementServices getFmServiceInterface() {
-		return fmServiceInterface;
+	public ServerInterf getServerInterf() {
+		return serverI;
 	}
 
 	private String currentUserName = "";
-
-	/*
-	 * final public static int BUF_SIZE = 1024 * 64;
-	 * 
-	 * public static void copy(InputStream in, OutputStream out) throws
-	 * IOException { System.out.println("using byte[] read/write"); byte[] b =
-	 * new byte[BUF_SIZE]; int len; while ((len = in.read(b)) >= 0) {
-	 * out.write(b, 0, len); } in.close(); out.close(); }
-	 * 
-	 * public static void upload(FileManagementServices server, MultipartFile
-	 * src, File dest) throws IOException { copy (src.getInputStream(),
-	 * server.getOutputStream(dest)); }
-	 * 
-	 * public static void download(FileManagementServices server, File src, File
-	 * dest) throws IOException { copy (server.getInputStream(src), new
-	 * FileOutputStream(dest)); }
-	 */
 
 	@RequestMapping(value = "/index")
 	public String home(HttpServletResponse response) {
@@ -70,25 +54,19 @@ public class HomeController {
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public String Login(HttpServletResponse response) {
 		try {
-
-			// fire to
-			// Registry myRegis = LocateRegistry.getRegistry("127.0.0.1");
-			 Registry myRegis = LocateRegistry.getRegistry("104.155.199.62");
+			Registry myRegis = LocateRegistry.getRegistry("127.0.0.1");
+			// Registry myRegis = LocateRegistry.getRegistry("104.155.199.62");
 			// Registry myRegis = LocateRegistry.getRegistry("192.168.137.161");
-			// Registry myRegis = LocateRegistry.getRegistry("104.46.63.42");
-			// Registry myRegis = LocateRegistry.getRegistry("54.169.102.72");
 			// search for FileManagementServices
-			fmServiceInterface = (FileManagementServices) myRegis
-					.lookup("FileManagementServices");
-			if (fmServiceInterface != null) {
+			serverI = (ServerInterf) myRegis.lookup("server");
+			if (serverI != null) {
 				logger.info("Found server FileManagementServices!");
+				logger.info(serverI.hello());
 			} else {
 				logger.info("Server FileManagementServices not found!");
 			}
-			// logger.info("home page");
-
-			logger.info(fmServiceInterface.hello());
 		} catch (Exception e) {
+			logger.info("Server FileManagementServices not found!");
 			e.printStackTrace();
 		}
 		return "login";
@@ -102,12 +80,11 @@ public class HomeController {
 			if (username == null || pass == null) {
 				return "login";
 			}
-			currentUserName = fmServiceInterface.Login(username, pass);
+			currentUserName = serverI.Login(username, pass);
 			if (username.equals(currentUserName)) {
 				return "index";
 			}
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return "login";
@@ -118,28 +95,51 @@ public class HomeController {
 			JSONException {
 
 		String str = "";
-		ArrayList<String> listFileName = fmServiceInterface
+		HashMap<String, String> listFileName = serverI
 				.getListOfFile(currentUserName);
 		str += "[";
 		if (listFileName == null) {
 			return "";
 		}
-		for (int i = 0; i < listFileName.size(); i++) {
+		int index = 0;
+		int size = listFileName.size();
+		for (String key : listFileName.keySet()) {
+			index++;
 			StringBuffer sb = new StringBuffer();
 			sb.append("{"); // Bắt đầu một đối tượng JSON là dấu mở ngoặc nhọn
-			sb.append("\"id\":\"" + (i + 1) + "\"");
+			sb.append("\"id\":\"" + index + "\""); // {"id":"i + 1",
 			sb.append(","); // sau mỗi cặp key/value là một dấu phẩy
-			sb.append("\"name\":\"" + listFileName.get(i) + "\"");
-
-			if (i == (listFileName.size() - 1)) {
-				sb.append("}"); // Kết thúc một đối tượng JSON là dấu đóng ngoặc
+			sb.append("\"title\":\"" + key + "\"");
+			sb.append(","); // sau mỗi cặp key/value là một dấu phẩy
+			sb.append("\"name\":\"" + listFileName.get(key) + "\"");
+			// {"id":"i + 1","name":"listFileName.get(i)"
+			if (index == size) {
+				sb.append("}"); // Kết thúc một đối tượng JSON bự là dấu đóng
+								// ngoặc
 								// nhọn
+				// {"id":"i + 1","name":"listFileName.get(i)"}
 			} else {
-				sb.append("},"); // Kết thúc một đối tượng JSON là dấu đóng
-									// ngoặc nhọn
+				sb.append("},"); // Kết thúc một đối tượng JSON nhỏ là dấu đóng
+									// ngoặc nhọn và 1 dấu phẩy
+				// {"id":"i + 1","name":"listFileName.get(i)"},
 			}
 			str += sb.toString();
 		}
+
+		/*
+		 * for (int i = 0; i < listFileName.size(); i++) { StringBuffer sb = new
+		 * StringBuffer(); sb.append("{"); // Bắt đầu một đối tượng JSON là dấu
+		 * mở ngoặc nhọn sb.append("\"id\":\"" + (i + 1) + "\""); //
+		 * {"id":"i + 1", sb.append(","); // sau mỗi cặp key/value là một dấu
+		 * phẩy sb.append("\"name\":\"" + listFileName.get(i) + "\""); //
+		 * {"id":"i + 1","name":"listFileName.get(i)" if (i ==
+		 * (listFileName.size() - 1)) { sb.append("}"); // Kết thúc một đối
+		 * tượng JSON bự là dấu đóng ngoặc // nhọn //
+		 * {"id":"i + 1","name":"listFileName.get(i)"} } else { sb.append("},");
+		 * // Kết thúc một đối tượng JSON nhỏ là dấu đóng // ngoặc nhọn và 1 dấu
+		 * phẩy // {"id":"i + 1","name":"listFileName.get(i)"}, } str +=
+		 * sb.toString(); }
+		 */
 		str += "]";
 		return str;
 	}
@@ -148,16 +148,25 @@ public class HomeController {
 	public ModelAndView downloadFile(HttpServletRequest request,
 			HttpServletResponse response) throws Exception {
 
-		String fileName = request.getParameter("fileName");
-		byte[] filedata = fmServiceInterface.downloadFile(fileName, currentUserName);
+		String fileTitle = request.getParameter("fileTitle");
+		byte[] fileData = serverI.downloadFile(fileTitle, currentUserName);
+
+		// get file name by file title
+		String fileName = serverI.getNameByTitle(fileTitle);
 		response.setHeader("Content-Disposition", "attachment; filename=\""
 				+ fileName + "\"");
-		response.setContentLength(filedata.length);
+		response.setContentLength(fileData.length);
 
-		FileCopyUtils.copy(filedata, response.getOutputStream());
+		FileCopyUtils.copy(fileData, response.getOutputStream());
 		response.getOutputStream().flush();
 		response.getOutputStream().close();
 		return null;
+		/*
+		 * byte[] buffer = new byte[65536]; while (fileData != -1) {
+		 * outStream.write(buffer, 0, bytesRead); }
+		 * 
+		 * inStream.close(); outStream.close();
+		 */
 	}
 
 	@RequestMapping(value = "/UploadFile", method = RequestMethod.POST)
@@ -170,36 +179,67 @@ public class HomeController {
 			try {
 				// create object to pass
 				FileDTO fileDetail = new FileDTO();
-				fileDetail.setCheckSum("checkSum001"); //not yet process it (update late)
+				// not yet process it (update late)
+				fileDetail.setCheckSum("checkSum001");
 				fileDetail.setDateUpload(Calendar.getInstance().getTime());
 				fileDetail.setFileId(1);
 				fileDetail.setFileName(file.getOriginalFilename());
-				fileDetail.setFileRoleId(1); //roleId = 1 , default role is private
+				int latestFileId = serverI.getLatestFileId();
+				if (latestFileId <= 0) {
+					System.out.println("get latest file id error!");
+					return;
+				}
+				// get the extend of file, ex: music.mp3
+				String fileExt = "." + file.getOriginalFilename().split("\\.")[1];
+				String fileTitle = currentUserName + latestFileId + fileExt;
+			    fileDetail.setFileTitle(fileTitle);
+				// roleId = 1 , default role is private
+				fileDetail.setFileRoleId(1);
 				fileDetail.setSize(file.getSize());
-				fileDetail.setFileStateId(1); //stateId = 1 , file is uploading
+				// stateId = 1 , file is uploading
+				fileDetail.setFileStateId(1);
 				fileDetail.setUrlFile("/" + currentUserName + "/");
 				fileDetail.setUserName(currentUserName);
 
-				int thread = fmServiceInterface
-						.sendFileInfoToServer(fileDetail);
+				int thread = serverI.sendFileInfoToServer(fileDetail);
 				if (thread != -1) {
+
+					/*
+					 * Runnable run_Transfer = new Runnable() {
+					 * 
+					 * @Override public void run() { try {
+					 * 
+					 * } catch (IOException e) { e.printStackTrace(); } } };
+					 * Thread thr1 = new Thread(run_Transfer); thr1.start();
+					 * thr1.join();
+					 */
+
+					/*
+					 * String tomcatHome = System.getProperty("catalina.home");
+					 * String fileNameToCreate = tomcatHome + "/temp/" +
+					 * file.getOriginalFilename();
+					 * 
+					 * File fileCreate = new File(fileNameToCreate);
+					 * FileUtils.writeByteArrayToFile(fileCreate,
+					 * file.getBytes());
+					 */
 					// upload file by bytes
-					byte[] data = new byte[8192];// 1024*8 , 8 bytes
+					byte[] data = new byte[65536];// 1024*64 , 64 bytes
 					int byteReads;
 					InputStream is = file.getInputStream();
 					byteReads = is.read(data);
 					while (byteReads != -1) {
-						fmServiceInterface.sendDataToServer(data, 0, byteReads,
-								thread);
+						serverI.sendDataToServer(data, 0, byteReads, thread);
 						byteReads = is.read(data);
 					}
 					is.close();
-					//finish upload and update file's state to Uploaded
-					fmServiceInterface.finishUpload(file.getOriginalFilename(),
-							thread);
-					System.out.println("File upload success!");
+					// finish upload and update file's state to Uploaded
+					if (serverI.finishUpload(fileDetail, thread)) {
+						System.out.println("File upload success!");
+						return;
+					}
 				} else {
-					System.out.println("Send file infomation failed!");
+					System.out.println("File upload failed!");
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -207,5 +247,12 @@ public class HomeController {
 				// update status failToUpload
 			}
 		}
+	}
+
+	public File multipartToFile(MultipartFile multipart)
+			throws IllegalStateException, IOException {
+		File convFile = new File(multipart.getOriginalFilename());
+		multipart.transferTo(convFile);
+		return convFile;
 	}
 }

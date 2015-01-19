@@ -76,14 +76,32 @@ public class ConnectDatatbase {
 
     public void Close() throws SQLException {
         // Check ResultSet
-        if (this.result != null && this.result.isClosed()) {
-            this.result.close();
-            this.result = null;
+       if (this.result != null) {
+        	if(!this.result.isClosed()){
+        		this.result.close();
+        		this.result = null;
+        	}
         }
         
-        if (this.connection != null && !this.connection.isClosed()) {
-            this.connection.close();
-            this.connection = null;
+        if (this.preState != null) {
+        	if(!this.preState.isClosed()){
+        		this.preState.close();
+        		this.preState = null;
+        	}
+        }
+        
+        if (this.statement != null) {
+        	if(!this.statement.isClosed()){
+        		this.statement.close();
+        		this.statement = null;
+        	}
+        }
+        
+        if (this.connection != null) {
+        	if(!this.connection.isClosed()){
+        		this.connection.close();
+        		this.connection = null;
+        	}
         }
     }
 }
