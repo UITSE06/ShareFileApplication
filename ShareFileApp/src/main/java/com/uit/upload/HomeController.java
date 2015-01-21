@@ -1,13 +1,13 @@
 package com.uit.upload;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
+import java.util.Iterator;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -23,8 +23,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.servlet.ModelAndView;
 
 import DataTranferObject.FileDTO;
@@ -35,6 +37,7 @@ import appServerHandling.*;
  * Quan who is very handsome boy edit on quanta branch
  */
 @Controller
+@SessionAttributes("userName")
 public class HomeController {
 
 	private static final Logger logger = LoggerFactory
@@ -42,17 +45,8 @@ public class HomeController {
 
 	private ServerInterf serverI;
 
-	// private MySessionCounter msc = new MySessionCounter();
-
 	public ServerInterf getServerInterf() {
 		return serverI;
-	}
-
-	private String currentUserName = "";
-
-	@RequestMapping(value = "/index")
-	public String home(HttpServletResponse response) {
-		return "index";
 	}
 
 	@RequestMapping(value = "/", method = RequestMethod.GET)
@@ -64,9 +58,8 @@ public class HomeController {
 			// search for FileManagementServices
 			serverI = (ServerInterf) myRegis.lookup("server");
 			if (serverI != null) {
-				logger.info("Found server FileManagementServices!");
 				logger.info(serverI.hello());
-				logger.info("Active Session"
+				logger.info("Active Session "
 						+ MySessionCounter.getActiveSessions());
 			} else {
 				logger.info("Server FileManagementServices not found!");
@@ -80,46 +73,45 @@ public class HomeController {
 
 	@RequestMapping(value = "/home", method = RequestMethod.GET)
 	public ModelAndView Welcome(HttpServletRequest request, HttpSession session) {
-
 		ModelAndView modelAndView = new ModelAndView();
-		String userSession = (String) session.getAttribute("userName");
-		if (userSession == null) {
-			modelAndView.setViewName("login");
-		} else {
-			modelAndView.addObject("userName", userSession);
-			modelAndView.setViewName("index");
-		}
-
+		modelAndView.setViewName("index");
 		return modelAndView;
 	}
 
 	@RequestMapping(value = "/home", method = RequestMethod.POST)
-	public ModelAndView LoginConfirm(HttpServletRequest request) {
+	public ModelAndView LoginConfirm(HttpServletRequest request,
+			HttpSession session) {
 
 		ModelAndView modelAndView = new ModelAndView();
 		modelAndView.setViewName("login");
 		try {
 			String username = request.getParameter("userName");
-
 			String pass = request.getParameter("pass");
+
 			if (username == null || pass == null) {
 				modelAndView.setViewName("login");
 				modelAndView.addObject("message",
 						"Please input User name and Password!");
 				return modelAndView;
 			}
-			currentUserName = serverI.Login(username, pass);
-			if (username.equals(currentUserName)) {
-				modelAndView.addObject("userName", username);
+			String currentUser = serverI.Login(username, pass);
+			if (username.equals(currentUser)) {
+				if(!username.equals((String)session.getAttribute("userName"))){
+					session.setAttribute("userName", username);
+					MySessionCounter.addActiveSessions();
+				}				
+				logger.info("Active Session "
+						+ MySessionCounter.getActiveSessions());
 				modelAndView.setViewName("index");
 				return modelAndView;
+
 			} else {
 				modelAndView.setViewName("login");
-				modelAndView.addObject("message", "Login failed!");
+				modelAndView.addObject("message",
+						"Wrong user name or password!");
 				return modelAndView;
 			}
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return modelAndView;
@@ -128,108 +120,118 @@ public class HomeController {
 	@RequestMapping(value = "/clearSession", method = RequestMethod.POST)
 	public ModelAndView ClearSession(HttpServletRequest request,
 			HttpSession session, SessionStatus status) {
+		ModelAndView modelAndView = new ModelAndView();
 		try {
-			status.setComplete();
-			session.removeAttribute("userName");
+			if ((String) session.getAttribute("userName") == null) {
+				modelAndView.setViewName("login");
+				return modelAndView;
+			} else {
+				status.setComplete();
+				session.removeAttribute("userName");
+				MySessionCounter.removeActiveSessions();
+			}
 		} catch (Exception e) {
-			// TODO: handle exception
 			e.printStackTrace();
 		}
-		ModelAndView modelAndView = new ModelAndView();
 		modelAndView.setViewName("login");
 		return modelAndView;
 	}
 
 	@RequestMapping(value = "/getFile", method = RequestMethod.POST)
-	public final @ResponseBody String getFile() throws IOException,
-			JSONException {
+	public final @ResponseBody String getFile(HttpSession session)
+			throws IOException, JSONException {
 
 		String str = "";
-		HashMap<String, String> listFileName = serverI
-				.getListOfFile(currentUserName);
-		str += "[";
-		if (listFileName == null) {
+		String userSession = (String) session.getAttribute("userName");
+		if (userSession == null) {
 			return "";
 		}
+		ArrayList<FileDTO> listFileInfo = serverI
+				.getListOfFile(userSession);
+		if (listFileInfo == null) {
+			return "";
+		}
+		str += "[";
 		int index = 0;
-		int size = listFileName.size();
-		for (String key : listFileName.keySet()) {
+		int size = listFileInfo.size();
+		for (FileDTO file : listFileInfo) {
 			index++;
 			StringBuffer sb = new StringBuffer();
 			sb.append("{"); // Bắt đầu một đối tượng JSON là dấu mở ngoặc nhọn
-			sb.append("\"id\":\"" + index + "\""); // {"id":"i + 1",
+			sb.append("\"name\":\"" + file.getFileName() + "\""); // {"id":"i + 1",
 			sb.append(","); // sau mỗi cặp key/value là một dấu phẩy
-			sb.append("\"title\":\"" + key + "\"");
+			String sizeString = String.format("%.2f", file.getSize());
+			sb.append("\"size\":\"" + sizeString + " MB" + "\"");
 			sb.append(","); // sau mỗi cặp key/value là một dấu phẩy
-			sb.append("\"name\":\"" + listFileName.get(key) + "\"");
+			sb.append("\"date\":\"" + file.getDateUploadString() + "\"");
+			sb.append(","); // sau mỗi cặp key/value là một dấu phẩy
+			sb.append("\"title\":\"" + file.getFileTitle() + "\"");
 			// {"id":"i + 1","name":"listFileName.get(i)"
 			if (index == size) {
-				sb.append("}"); // Kết thúc một đối tượng JSON bự là dấu đóng
-								// ngoặc
-								// nhọn
+				sb.append("}"); // Kết thúc một đối tượng JSON là dấu đóng
+								// ngoặc nhọn
 				// {"id":"i + 1","name":"listFileName.get(i)"}
 			} else {
-				sb.append("},"); // Kết thúc một đối tượng JSON nhỏ là dấu đóng
+				sb.append("},"); // Kết thúc một đối tượng JSON thêm dấu đóng
 									// ngoặc nhọn và 1 dấu phẩy
 				// {"id":"i + 1","name":"listFileName.get(i)"},
 			}
 			str += sb.toString();
 		}
-
-		/*
-		 * for (int i = 0; i < listFileName.size(); i++) { StringBuffer sb = new
-		 * StringBuffer(); sb.append("{"); // Bắt đầu một đối tượng JSON là dấu
-		 * mở ngoặc nhọn sb.append("\"id\":\"" + (i + 1) + "\""); //
-		 * {"id":"i + 1", sb.append(","); // sau mỗi cặp key/value là một dấu
-		 * phẩy sb.append("\"name\":\"" + listFileName.get(i) + "\""); //
-		 * {"id":"i + 1","name":"listFileName.get(i)" if (i ==
-		 * (listFileName.size() - 1)) { sb.append("}"); // Kết thúc một đối
-		 * tượng JSON bự là dấu đóng ngoặc // nhọn //
-		 * {"id":"i + 1","name":"listFileName.get(i)"} } else { sb.append("},");
-		 * // Kết thúc một đối tượng JSON nhỏ là dấu đóng // ngoặc nhọn và 1 dấu
-		 * phẩy // {"id":"i + 1","name":"listFileName.get(i)"}, } str +=
-		 * sb.toString(); }
-		 */
 		str += "]";
 		return str;
 	}
 
 	@RequestMapping(value = "/download", method = RequestMethod.GET)
 	public ModelAndView downloadFile(HttpServletRequest request,
-			HttpServletResponse response) throws Exception {
+			HttpServletResponse response, HttpSession session) throws Exception {
 
+		ModelAndView modelAndView = new ModelAndView();
 		String fileTitle = request.getParameter("fileTitle");
 
 		// return a link to another server
-
-		byte[] fileData = serverI.downloadFile(fileTitle, currentUserName);
+		String userSession = (String) session.getAttribute("userName");
+		if (userSession == null) {
+			modelAndView.setViewName("login");
+			modelAndView.addObject("message", "Time out, Please log in again!");
+			return modelAndView;
+		}
+		//start busy thread download
+		serverI.increaseBusyThread();
+		byte[] fileData = serverI.downloadFile(fileTitle, userSession);
 
 		// get file name by file title
 		String fileName = serverI.getNameByTitle(fileTitle);
 		response.setHeader("Content-Disposition", "attachment; filename=\""
 				+ fileName + "\"");
 		response.setContentLength(fileData.length);
-
 		FileCopyUtils.copy(fileData, response.getOutputStream());
+		//stop busy thread
+		serverI.decreaseBusyThread();
 		response.getOutputStream().flush();
 		response.getOutputStream().close();
 		return null;
-		/*
-		 * byte[] buffer = new byte[65536]; while (fileData != -1) {
-		 * outStream.write(buffer, 0, bytesRead); }
-		 * 
-		 * inStream.close(); outStream.close();
-		 */
 	}
 
 	@RequestMapping(value = "/UploadFile", method = RequestMethod.POST)
-	public void upload(HttpServletResponse response,
-			@RequestParam(value = "myfile") MultipartFile file)
-			throws ServletException, IOException {
-
+	public ModelAndView upload(HttpServletResponse response,
+			MultipartHttpServletRequest request,
+			HttpSession session) throws ServletException, IOException {
+		logger.info("begin upload");
 		// process only when file is not empty
+		
+		MultipartFile file = request.getFile("myfile");
 		if (!file.isEmpty()) {
+			
 			try {
+				ModelAndView modelAndView = new ModelAndView();
+				String userSession = (String) session.getAttribute("userName");
+				if (userSession == null) {
+					modelAndView.setViewName("login");
+					modelAndView.addObject("message",
+							"Time out, Please log in again!");
+					return modelAndView;
+				}
 				// create object to pass
 				FileDTO fileDetail = new FileDTO();
 				// not yet process it (update late)
@@ -240,34 +242,23 @@ public class HomeController {
 				int latestFileId = serverI.getLatestFileId();
 				if (latestFileId <= 0) {
 					System.out.println("get latest file id error!");
-					return;
+					return null;
 				}
 				// get the extend of file, ex: music.mp3
-				String fileExt = "."
-						+ file.getOriginalFilename().split("\\.")[1];
-				String fileTitle = currentUserName + latestFileId + fileExt;
+				String splitString[] = file.getOriginalFilename().split("\\.");
+				String fileExt = "." + splitString[splitString.length - 1];
+				String fileTitle = userSession + latestFileId + fileExt;
 				fileDetail.setFileTitle(fileTitle);
 				// roleId = 1 , default role is private
 				fileDetail.setFileRoleId(1);
 				fileDetail.setSize(file.getSize());
 				// stateId = 1 , file is uploading
 				fileDetail.setFileStateId(1);
-				fileDetail.setUrlFile("/" + currentUserName + "/");
-				fileDetail.setUserName(currentUserName);
+				fileDetail.setUrlFile("/" + userSession + "/");
+				fileDetail.setUserName(userSession);
 
 				int thread = serverI.sendFileInfoToServer(fileDetail);
 				if (thread != -1) {
-
-					/*
-					 * Runnable run_Transfer = new Runnable() {
-					 * 
-					 * @Override public void run() { try {
-					 * 
-					 * } catch (IOException e) { e.printStackTrace(); } } };
-					 * Thread thr1 = new Thread(run_Transfer); thr1.start();
-					 * thr1.join();
-					 */
-
 					/*
 					 * String tomcatHome = System.getProperty("catalina.home");
 					 * String fileNameToCreate = tomcatHome + "/temp/" +
@@ -290,10 +281,10 @@ public class HomeController {
 					// finish upload and update file's state to Uploaded
 					if (serverI.finishUpload(fileDetail, thread)) {
 						System.out.println("File upload success!");
-						return;
 					}
 				} else {
-					System.out.println("File upload failed!");
+					//send message server busy
+					System.out.println("Server is busy!");
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -301,12 +292,26 @@ public class HomeController {
 				// update status failToUpload
 			}
 		}
+		return null;
 	}
+	
+	@RequestMapping(value = "/deleteFile", method = RequestMethod.GET)
+	public ModelAndView deleteFile(HttpServletRequest request,
+			HttpServletResponse response, HttpSession session) throws Exception {
 
-	public File multipartToFile(MultipartFile multipart)
-			throws IllegalStateException, IOException {
-		File convFile = new File(multipart.getOriginalFilename());
-		multipart.transferTo(convFile);
-		return convFile;
+		ModelAndView modelAndView = new ModelAndView();
+		String fileTitle = request.getParameter("fileTitle");
+
+		// return a link to another server
+		String userSession = (String) session.getAttribute("userName");
+		if (userSession == null) {
+			modelAndView.setViewName("login");
+			modelAndView.addObject("message", "Time out, Please log in again!");
+			return modelAndView;
+		}	
+		if(serverI.deleteFile(userSession, fileTitle)){
+			
+		}
+		return null;
 	}
 }

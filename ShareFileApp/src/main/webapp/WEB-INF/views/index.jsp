@@ -1,6 +1,14 @@
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
 	pageEncoding="ISO-8859-1"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+
+<%@ page session="true"%>
+<% String userSession = (String) session.getAttribute("userName");
+ if(userSession == null)
+ {
+  response.sendRedirect("./");
+ }
+%>
 <!DOCTYPE htm>
 <html>
 <head>
@@ -10,9 +18,7 @@
 	href="<c:url value ="/resources/css/indexStyle.css"/>" type="text/css">
 <link rel="stylesheet"
 	href="<c:url value ="/resources/css/uploadStyle.css"/>" type="text/css">
-<link rel="stylesheet"
-	href="<c:url value ="/resources/css/bootstrap.min.css"/>"
-	type="text/css">
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 <link rel="stylesheet"
 	href="<c:url value ="/resources/css/normalize.css"/>" type="text/css">
 
@@ -20,12 +26,15 @@
 	type="text/javascript"></script>
 <script src="<c:url value ="/resources/js/jquery.form.js"/>"
 	type="text/javascript"></script>
-<script src="<c:url value ="/resources/js/bootstrap.min.js"/>"
-	type="text/javascript"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 <script src="<c:url value ="/resources/js/bootstrap-filestyle.min.js"/>"
 	type="text/javascript"></script>
 <script src="<c:url value ="/resources/js/bootbox.min.js"/>"
 	type="text/javascript"></script>
+<script src="<c:url value ="/resources/js/jquery.dataTables.min.js"/>" 
+	type="text/javascript" ></script>
+<script src="<c:url value ="/resources/js/dataTables.bootstrap.js"/>" 
+	type="text/javascript" ></script>
 <script src="<c:url value ="/resources/js/fileUploadScript.js"/>"
 	type="text/javascript"></script>
 <script src="<c:url value ="/resources/js/modernizr.js"/>"
@@ -105,8 +114,7 @@
 
 		<!-- Upload area -->
 		<div id="uploadArea">
-			<form id="UploadForm" action="UploadFile" method="post"
-				enctype="multipart/form-data">
+			<form id="UploadForm" method="post" enctype="multipart/form-data">
 				<div id="btnUpload" class="bootstrap-filestyle input-group">
 					<input id="myfile" name="myfile" class="filestyle" type="file"
 						data-input="true"
@@ -123,25 +131,10 @@
 				</div>
 
 				<div id="btnSubmit">
-					<button class="btn btn-success" id="submitUp">Upload</button>
+					<input class="btn btn-success" id="submitUp" value="Upload"/>
 				</div>
 			</form>
 
-			<!-- Search -->
-			<div id="searchField">
-				<form class="navbar-form" role="search" method="get"
-					id="search-form" name="search-form">
-					<div class="input-group">
-						<input type="text" class="form-control" placeholder="Search..."
-							id="query" name="query" value="">
-						<div class="input-group-btn">
-							<button type="submit" class="btn btn-success">
-								<span class="glyphicon glyphicon-search"></span>
-							</button>
-						</div>
-					</div>
-				</form>
-			</div>
 		</div>
 
 		<div id="message"></div>
@@ -151,10 +144,6 @@
 	<!-- div main -->
 	<div id="mfMain">
 		<table id="tbFile" class="table table-striped table-bordered">
-			<tr>
-				<th>ID</th>
-				<th>File Name</th>
-			</tr>
 		</table>
 	</div>
 

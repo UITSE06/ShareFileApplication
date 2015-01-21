@@ -26,20 +26,27 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 	/**
 	 * 
 	 */
-	final int MAXTHREAD = 10;
-	final String ipThisServer = "130.211.245.75";// server 4
+	final int MAXTHREAD = 20;
+	private String ipThisServer = "";
 
 	private static final long serialVersionUID = 1L;
 	private Registry rmiRegistry;
 	private ConnectDatatbase connectDB = new ConnectDatatbase();
 	private HashMap<Integer, FileOutputStream> listThreadUpload;
 	private ArrayList<Integer> listFreeThreadUpload;
+	private int numOfBusyThread;
 	private int indexUpload = 0;
 
 	public void start() throws Exception {
 		rmiRegistry = LocateRegistry.createRegistry(1099);
 		rmiRegistry.bind("server", this);
 		System.out.println("Server started");
+		try {
+			ipThisServer = CheckIpTool.getIp();
+		} catch (Exception ex) {
+			System.out.println("Can't check server IP!");
+		}
+		System.out.println(ipThisServer);
 	}
 
 	public void stop() throws Exception {
@@ -55,8 +62,27 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 		listFreeThreadUpload = new ArrayList<Integer>();
 	}
 
+	public int getNumOfBusyThread() throws RemoteException {
+		return numOfBusyThread;
+	}
+
+	public String getServerIp() throws RemoteException {
+		return ipThisServer;
+	}
+
+	public void increaseBusyThread() throws RemoteException {
+		numOfBusyThread++;
+	}
+
+	public void decreaseBusyThread() throws RemoteException {
+		if (numOfBusyThread > 0) {
+			numOfBusyThread--;
+		}
+	}
+
 	public int sendFileInfoToServer(FileDTO fileDetail) throws RemoteException {
 		try {
+			increaseBusyThread();
 			String userName = fileDetail.getUserName();
 
 			if (Files.notExists(Paths.get(userName))) {
@@ -108,7 +134,7 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 			statement.setString(5, fileDetail.getUrlFile());
 			statement.setInt(6, fileDetail.getFileRoleId());
 			statement.setObject(7, fileDetail.getDateUpload());
-			statement.setLong(8, fileDetail.getSize());
+			statement.setFloat(8, fileDetail.getSize());
 			statement.setString(9, fileDetail.getCheckSum());
 			if (!statement.execute()) {// it's a insert sql, so this function
 										// return false if it execute success
@@ -171,6 +197,7 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 			try {
 				listThreadUpload.get(thread).close();
 				listFreeThreadUpload.add(thread);
+				decreaseBusyThread();
 				System.out.println("upload file done!");
 				// update database, update status of file: uploaded
 				String sql = "UPDATE `file` SET `file_state_id` = 2 WHERE `filename` = ?";
@@ -208,22 +235,6 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 		return false;
 	}
 
-	/*
-	 * public int downloadFile(String fileName, String userName) { try { File
-	 * file = new File(userName + "/" + fileName); if (indexDownload <
-	 * MAXTHREAD) { indexDownload++; BufferedInputStream input = new
-	 * BufferedInputStream( new FileInputStream(file));
-	 * listThreadDownload.put(indexDownload, input); return indexDownload; }
-	 * else if (listFreeThreadDownload.size() != 0) {// have a free // thread?
-	 * int thread = listFreeThreadDownload.get(0);// get thread ID // thread
-	 * will busy, so remove it from free list listFreeThreadDownload.remove(0);
-	 * BufferedInputStream input = new BufferedInputStream( new
-	 * FileInputStream(file)); listThreadDownload.put(thread, input); return
-	 * thread; } } catch (Exception e) {
-	 * System.out.println("Server download file: " + e.getMessage()); return -1;
-	 * } return -1; }
-	 */
-
 	public byte[] downloadFile(String fileTitle, String userName)
 			throws RemoteException {
 		try {
@@ -238,6 +249,20 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 			System.out.println("Server download file: " + e.getMessage());
 			return (null);
 		}
+	}
+
+	public boolean deleteFile(String userName, String fileTitle)
+			throws RemoteException {
+		try {
+			File file = new File(userName + "/" + fileTitle);
+			if (file != null) {
+				return file.delete();
+			}
+			// return (buffer);
+		} catch (Exception e) {
+			System.out.println("Server delete file: " + e.getMessage());
+		}
+		return false;
 	}
 
 	public String getNameByTitle(String fileTitle) throws RemoteException {
@@ -261,21 +286,6 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 		return null;
 	}
 
-	/*
-	 * @SuppressWarnings("unused") public long sendFileLenToClient(String
-	 * fileName, String userName) throws RemoteException { File file = new
-	 * File(userName + "/" + fileName); if (file != null) { return
-	 * file.length(); } else { return -1; } }
-	 */
-
-	/*
-	 * public byte[] sendDataToClient(int thread) throws RemoteException { if
-	 * (thread != -1) { try { byte buffer[] = new byte[65536];
-	 * BufferedInputStream input = listThreadDownload.get(thread);
-	 * input.read(buffer, 0, buffer.length); input.close(); return buffer; }
-	 * catch (IOException e) { e.printStackTrace(); } } return null; }
-	 */
-
 	public boolean checkFileExist(String fileName, String userName)
 			throws RemoteException {
 
@@ -288,7 +298,7 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 			ResultSet rs = statement.executeQuery();
 			if (rs.next()) {// had have file in database
 				connectDB.Close();
-				//check file on disk
+				// check file on disk
 				return true;
 			}
 		} catch (Exception ex) {
@@ -303,60 +313,96 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 		return false;
 	}
 
-	public int transferFileToOthers(FileDTO fileDetail) {
-		// read all available server IP
+	public ArrayList<String> getListServer() throws RemoteException {
+		ArrayList<String> result = new ArrayList<String>();
 		String sqlInsertFile = "SELECT `IP_server` FROM `server`";
 		try {
 			Statement statement = connectDB.GetStatement();
 			ResultSet rs = statement.executeQuery(sqlInsertFile);
+			while (rs.next()) {
+				result.add(rs.getString(1));
+			}
+			return result;
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return null;
+	}
+
+	public int transferFileToOthers(FileDTO fileDetail) {
+		// read all available server IP
+		//String sqlInsertFile = "SELECT `IP_server` FROM `server`";
+		try {
+			/*Statement statement = connectDB.GetStatement();
+			ResultSet rs = statement.executeQuery(sqlInsertFile);*/
 			Registry myRegis;
 			ServerInterf serverI;
 			int numServer = 0;
-			ArrayList<String> listIpServer = new ArrayList<String>();
-			while (rs.next()) {
+			ArrayList<String> listIpServer = getListServer();
+			/*while (rs.next()) {
 				String serverIP = rs.getString(1);
 				if (!ipThisServer.equals(serverIP)) {
 					listIpServer.add(serverIP);
 				}
-			}
-			connectDB.Close();
+			}*/
+			listIpServer.remove(ipThisServer);
+			ServerInterf freeServer = null;
+			int minThreadServer = this.getNumOfBusyThread();
 			for (String serverIP : listIpServer) {
 				try {
 					myRegis = LocateRegistry.getRegistry(serverIP);
 					// search for server
 					serverI = (ServerInterf) myRegis.lookup("server");
 				} catch (Exception ex) {
-					System.out.println("server: " + serverIP + " not found!");
+					// System.out.println("server: " + serverIP +
+					// " not found!");
+					// listIpServer.remove(serverIP);
 					continue;
 				}
 				if (serverI != null) {
-					// check file in another server
-					// if this server haven't this file yet then transfer it
-					if (!serverI.checkFileExist(fileDetail.getFileName(),
-							fileDetail.getUserName())) {
-						int thread = serverI.sendFileInfoToServer(fileDetail);
-
-						// transfer file by bytes
-						byte[] data = new byte[65536];// 1024*64 , 64 bytes
-						int byteReads;
-						FileInputStream fis = new FileInputStream(new File(
-								fileDetail.getUserName() + "/"
-										+ fileDetail.getFileTitle()));
-						byteReads = fis.read(data);
-						while (byteReads != -1) {
-							serverI.sendDataToServer(data, 0, byteReads, thread);
-							byteReads = fis.read(data);
-						}
-						fis.close();
-
-						// finish upload and update file's state to Uploaded
-						if (serverI.finishTransferOneServer(fileDetail, thread)) {
-							System.out.println("transfer file success + 1");
-							numServer++;
-						}
+					int otherServerThread = serverI.getNumOfBusyThread();
+					if (otherServerThread < minThreadServer) {
+						freeServer = serverI;
+						minThreadServer = otherServerThread;
 					}
 				}
 			}
+			if (freeServer != null) {// transfer file to this free server
+				// check file in another server
+				// if this server haven't this file yet then transfer it
+				if (!freeServer.checkFileExist(fileDetail.getFileName(),
+						fileDetail.getUserName())) {
+					int thread = freeServer.sendFileInfoToServer(fileDetail);
+
+					// transfer file by bytes
+					byte[] data = new byte[65536];// 1024*64 , 64 bytes
+					int byteReads;
+					FileInputStream fis = new FileInputStream(new File(
+							fileDetail.getUserName() + "/"
+									+ fileDetail.getFileTitle()));
+					byteReads = fis.read(data);
+					while (byteReads != -1) {
+						freeServer.sendDataToServer(data, 0, byteReads, thread);
+						byteReads = fis.read(data);
+					}
+					fis.close();
+
+					// finish upload and update file's state to Uploaded
+					if (freeServer.finishTransferOneServer(fileDetail, thread)) {
+						System.out
+								.println("transfered file to another free server success!");
+						numServer++;
+					}
+				}
+				listIpServer.remove(freeServer.getServerIp());
+				// call this free server to transfer file to others server
+				freeServer.transferFile(fileDetail, listIpServer);
+			} else {
+				// there is no server freer than this server, so transfer file
+				// to all others
+				transferFile(fileDetail, listIpServer);
+			}
+
 			return numServer;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -370,12 +416,60 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 		return 0;
 	}
 
+	public void transferFile(FileDTO fileDetail, ArrayList<String> listIpServer)
+			throws RemoteException {
+
+		Registry myRegis;
+		ServerInterf serverI;
+		byte[] data = new byte[65536];// 1024*64 , 64 bytes
+		int byteReads;
+		try {
+			for (String serverIP : listIpServer) {
+				try {
+					myRegis = LocateRegistry.getRegistry(serverIP);
+					// search for server
+					serverI = (ServerInterf) myRegis.lookup("server");
+				} catch (Exception ex) {
+					System.out.println("Server " + serverIP + " not found!");
+					continue;
+				}
+				if (serverI != null) {
+					// check file in another server
+					// if this server haven't this file yet then transfer it
+					if (!serverI.checkFileExist(fileDetail.getFileName(),
+							fileDetail.getUserName())) {
+						int thread = serverI.sendFileInfoToServer(fileDetail);
+
+						// transfer file by bytes
+						FileInputStream fis = new FileInputStream(new File(
+								fileDetail.getUserName() + "/"
+										+ fileDetail.getFileTitle()));
+						byteReads = fis.read(data);
+						while (byteReads != -1) {
+							serverI.sendDataToServer(data, 0, byteReads, thread);
+							byteReads = fis.read(data);
+						}
+						fis.close();
+
+						// finish upload and update file's state to Uploaded
+						if (serverI.finishTransferOneServer(fileDetail, thread)) {
+							System.out.println("transfer file success + 1");
+						}
+					}
+				}
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+	}
+
 	public boolean finishTransferOneServer(final FileDTO fileDetail, int thread)
 			throws RemoteException {
 		if (thread != -1) {
 			try {
 				listThreadUpload.get(thread).close();
 				listFreeThreadUpload.add(thread);
+				decreaseBusyThread();
 				System.out.println("upload file done!");
 				// update database, update status of file: uploaded
 				String sql = "UPDATE `file` SET `file_state_id` = 2 WHERE `filename` = ?";
@@ -398,7 +492,7 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 		}
 		return false;
 	}
-	
+
 	public String Login(String userName, String passWord)
 			throws RemoteException {
 		try {
@@ -422,7 +516,6 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 			try {
 				connectDB.Close();
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -430,15 +523,11 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 	}
 
 	@Override
-	public HashMap<String, String> getListOfFile(String userName)
+	public ArrayList<FileDTO> getListOfFile(String userName)
 			throws RemoteException {
-
 		ArrayList<String> listFileOnDisk = new ArrayList<String>();
-		HashMap<String, String> listTitleAndName = new HashMap<String, String>();
-		// get list file of user from database
-		String sqlInsertFile = "SELECT `file_title`, `filename` FROM `file` WHERE `username` = ?";
+		ArrayList<FileDTO> listFileInfo = new ArrayList<FileDTO>();
 		try {
-
 			if (Files.exists(Paths.get(userName))) {
 				File folder = new File(userName + "/");
 				File[] listOfFileTitle = folder.listFiles();
@@ -446,19 +535,29 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 					listFileOnDisk.add(file.getName());
 				}
 			}
-
+			// get list file of user from database
+			String sqlInsertFile = "SELECT `file_title`, `filename`, `size`, `dateupload` FROM `file` WHERE `username` = ?";
 			PreparedStatement statement = connectDB
 					.GetPrepareStatement(sqlInsertFile);
 			statement.setString(1, userName);
 			ResultSet rs = statement.executeQuery();
+			FileDTO fileInfo;// = new FileDTO();
 			while (rs.next()) {
-				String fileTitle = rs.getString(1);
-				//if file exist on database and also exist on disk, then put it into hashmap to return
-				if(listFileOnDisk.indexOf(fileTitle) > 0){
-					listTitleAndName.put(fileTitle, rs.getString(2));
+				fileInfo = new FileDTO();
+				fileInfo.setFileTitle(rs.getString(1));
+				fileInfo.setFileName(rs.getString(2));
+				fileInfo.setSize((float) rs.getLong(3) / 1048576);// get size by
+																	// MB
+				fileInfo.setDateUpload(rs.getTime(4));
+				fileInfo.setDateUploadString("" + rs.getTime(4) + " "
+						+ rs.getDate(4));
+				// if file exist on database and also exist on disk, then put it
+				// into hashmap to return
+				if (listFileOnDisk.indexOf(fileInfo.getFileTitle()) >= 0) {
+					listFileInfo.add(fileInfo);
 				}
 			}
-			return listTitleAndName;
+			return listFileInfo;
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -468,17 +567,6 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 				e.printStackTrace();
 			}
 		}
-
-		// check if have any file of user in database, but don't have file on
-		// disk, then remove file from return hashmap
-		/*
-		 * if (Files.exists(Paths.get(userName))) { File folder = new
-		 * File(userName + "/"); File[] listOfFileTitle = folder.listFiles();
-		 * for (File file : listOfFileTitle) { if
-		 * (!listTitleAndName.containsKey(file.getName())) {
-		 * listTitleAndName.remove(file.getName()); } } return listTitleAndName;
-		 * }
-		 */
 		return null;
 	}
 

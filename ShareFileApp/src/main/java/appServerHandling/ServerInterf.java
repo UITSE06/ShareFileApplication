@@ -2,12 +2,18 @@ package appServerHandling;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.HashMap;
+import java.util.ArrayList;
 
 import DataTranferObject.FileDTO;
 
 public interface ServerInterf extends Remote {
 	// at client
+
+	// thread manager
+	public void increaseBusyThread() throws RemoteException;
+
+	public void decreaseBusyThread() throws RemoteException;
+
 	// upload
 	public int sendFileInfoToServer(FileDTO fileDetail) throws RemoteException;
 
@@ -16,15 +22,21 @@ public interface ServerInterf extends Remote {
 
 	public boolean finishUpload(FileDTO fileDetail, int thread)
 			throws RemoteException;
-	
+
 	public int getLatestFileId() throws RemoteException;
-	
+
 	// download file
 	public byte[] downloadFile(String fileTitle, String userName)
 			throws RemoteException;
+
 	public String getNameByTitle(String fileTitle) throws RemoteException;
+
+	// delete file
+	public boolean deleteFile(String userName, String fileTitle)
+			throws RemoteException;
+
 	// get list of file uploaded
-	public HashMap<String, String> getListOfFile(String userName)
+	public ArrayList<FileDTO> getListOfFile(String userName)
 			throws RemoteException;
 
 	// login

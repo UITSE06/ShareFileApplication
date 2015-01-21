@@ -1,25 +1,19 @@
 @CHARSET "ISO-8859-1";
 
 #mfHeader{
-	margin-left: 220px;
-	background: none repeat scroll 0 0 #eaeaea;
-	height: 70px;
+ margin-left: 220px;
+ background: none repeat scroll 0 0 #eaeaea;
+ height: 70px;
 }
 
 #logo{
-	margin-left: 10px;
+ margin-left: 10px;
     padding-top: 1px;
     width: 200px;
 }
 #uploadArea{
-	margin-left: 200px;
+ margin-left: 220px;
     margin-top: -45px;
-}
-
-#searchField{
-    margin-left: 565px;
-    margin-top: -42px;
-    width: 260px;
 }
 
 .btn-file {
@@ -46,21 +40,24 @@ input[readonly] {
 }
 
 #UploadForm{
-	width: 500px;
+ width: 500px;
 }
 
 #btnSubmit{
-    margin-left: 495px;
+    margin-left: 570px;
     margin-top: -30px;
 }
 
 #message{
-	margin-left: 503px;
-	margin-top: -9px;
+ margin-left: 555px;
+ margin-top: -9px;
 }
 
 #mfMain{
-	margin-left: 230px;
-    padding-top: 10px;
+    border: 2px solid #a1a1a1;
+    border-radius: 5px;
+    margin-left: 240px;
+    margin-top: 14px;
+    padding: 10px;
     width: 1000px;
 }

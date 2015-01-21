@@ -14,11 +14,25 @@ public class FileDTO implements Serializable {
 	String fileName;
 	String fileTitle;
 	String urlFile;
-	int fileRoleId;
+	String fileRoleName;
+	int FileRoleId;
 	Date dateUpload;
-	long size;
+	String dateUploadString;
+	public String getDateUploadString() {
+		return dateUploadString;
+	}
+	public void setDateUploadString(String dateUploadString) {
+		this.dateUploadString = dateUploadString;
+	}
+	float size;
 	String checkSum;
 	
+	public int getFileRoleId() {
+		return FileRoleId;
+	}
+	public void setFileRoleId(int fileRoleId) {
+		FileRoleId = fileRoleId;
+	}
 	
 	public String getFileTitle() {
 		return fileTitle;
@@ -57,11 +71,11 @@ public class FileDTO implements Serializable {
 	public void setUrlFile(String urlFile) {
 		this.urlFile = urlFile;
 	}
-	public int getFileRoleId() {
-		return fileRoleId;
+	public String getFileRoleName() {
+		return fileRoleName;
 	}
-	public void setFileRoleId(int roleFile) {
-		this.fileRoleId = roleFile;
+	public void setFileRoleName(String roleFile) {
+		this.fileRoleName = roleFile;
 	}
 	public Date getDateUpload() {
 		return dateUpload;
@@ -69,10 +83,10 @@ public class FileDTO implements Serializable {
 	public void setDateUpload(Date dateUpload) {
 		this.dateUpload = dateUpload;
 	}
-	public long getSize() {
+	public float getSize() {
 		return size;
 	}
-	public void setSize(long size) {
+	public void setSize(float size) {
 		this.size = size;
 	}
 	public String getCheckSum() {

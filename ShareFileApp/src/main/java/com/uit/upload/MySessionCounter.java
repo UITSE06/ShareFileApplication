@@ -15,7 +15,7 @@ public class MySessionCounter implements HttpSessionListener {
 	private static int activeSessions = 0;
 
 	public void sessionCreated(HttpSessionEvent se) {
-		activeSessions++;
+		//activeSessions++;
 	}
 
 	public void sessionDestroyed(HttpSessionEvent se) {
@@ -25,6 +25,15 @@ public class MySessionCounter implements HttpSessionListener {
 
 	public static int getActiveSessions() {
 		return activeSessions;
+	}
+	
+	public static void removeActiveSessions() {
+		if (activeSessions > 0)
+			activeSessions--;
+	}
+	
+	public static void addActiveSessions() {
+			activeSessions++;
 	}
 
 }
