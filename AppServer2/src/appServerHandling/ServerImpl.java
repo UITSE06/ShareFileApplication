@@ -326,6 +326,7 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+		System.out.println("Can't read list server form database");
 		return null;
 	}
 
@@ -345,6 +346,9 @@ public class ServerImpl extends UnicastRemoteObject implements ServerInterf {
 					listIpServer.add(serverIP);
 				}
 			}*/
+			if(listIpServer == null){
+				return 0;
+			}
 			listIpServer.remove(ipThisServer);
 			ServerInterf freeServer = null;
 			int minThreadServer = this.getNumOfBusyThread();

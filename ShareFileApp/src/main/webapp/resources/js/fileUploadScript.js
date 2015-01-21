@@ -26,64 +26,53 @@ $(document).ready(function() {
 	// get list file of user
 	getFileAction();
 	
-	// get data from input
-//	var formData = new FormData();
-//	formData.append('myfile', myfile.files[0]);
+	var options = {
+		// Do something before uploading
+		beforeSend : function() {
+			$("#progressbox").show();
+			// clear everything
+			$("#progressbar").width('0%');
+			$("#message").empty();
+			$("#percent").html("0%");
+		},
+		uploadProgress : function(event, position, total,
+				percentComplete) {
+			//send an ajax to notify that uploading
+			$("#progressbar").width(percentComplete + '%');
+			$("#percent").html(percentComplete + '%');
+
+			// change message text and % to red after 50%
+			if (percentComplete > 50) {
+				$("#message")
+						.html(
+								"<font color='red'>File Upload is in progress .. </font>");
+			}
+		},
+		success : function() {
+			$("#progressbar").width('100%');
+			$("#percent").html('100%');
+		},
+		complete : function(response) {
+			$("#message").html("<font color='blue'>Your file has been uploaded!</font>");
+
+			// get list file
+			getFileAction();
+		},
+		error : function() {
+			$("#message").html("<font color='red'> ERROR: unable to upload files</font>");
+		} 
+	};
 	
-	var formData = $('#UploadForm').serializeArray();
-	
-	//Click button submit
+	// button submit click
 	$('#submitUp').click(function() {
-		
-		//get the file size and file type from file input field
-        var fsize = $('input[type=file]')[0].files[0].size;
+		var fsize = $('input[type=file]')[0].files[0].size;
         if( fsize > 83886080 ) //do something if file size more than 1 mb (1048576)
         {
             alert("This file is " + fsize/1048576 + " MB" + "\nToo big!");
-        }else{
-          $.ajax({
-                 url: './UploadFile',
-                 data: formData,
-                 processData: false,
-                 contentType: false,
-                 type: 'POST',
-                 // Do something before uploading
-                 beforeSend : function() {
-         			$("#progressbox").show();
-         			// clear everything
-         			$("#progressbar").width('0%');
-         			$("#message").empty();
-         			$("#percent").html("0%");
-         		},
-         		uploadProgress : function(event, position, total,
-         				percentComplete) {
-         			//send an ajax to notify that uploading
-         			$("#progressbar").width(percentComplete + '%');
-         			$("#percent").html(percentComplete + '%');
-
-         			// change message text and % to red after 50%
-         			if (percentComplete > 50) {
-         				$("#message")
-         						.html(
-         								"<font color='red'>File Upload is in progress .. </font>");
-         			}
-         		},
-         		success : function() {
-         			$("#progressbar").width('100%');
-         			$("#percent").html('100%');
-         		},
-         		complete : function(response) {
-         			$("#message")
-         					.html(
-         							"<font color='blue'>Your file has been uploaded!</font>");
-
-         			// get list file
-         			getFileAction();
-         		},
-         		error : function() {
-         			$("#message").html("<font color='red'> ERROR: unable to upload files</font>");
-         		}    
-          });
+            return false;
+        }
+        else{
+        	$("#UploadForm").ajaxForm(options);
         }
 	});
 });

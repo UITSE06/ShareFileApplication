@@ -114,7 +114,7 @@
 
 		<!-- Upload area -->
 		<div id="uploadArea">
-			<form id="UploadForm" method="post" enctype="multipart/form-data">
+			<form id="UploadForm" method="post" action="UploadFile" enctype="multipart/form-data">
 				<div id="btnUpload" class="bootstrap-filestyle input-group">
 					<input id="myfile" name="myfile" class="filestyle" type="file"
 						data-input="true"
@@ -131,7 +131,7 @@
 				</div>
 
 				<div id="btnSubmit">
-					<input class="btn btn-success" id="submitUp" value="Upload"/>
+					<button class="btn btn-success" id="submitUp">Upload</button>
 				</div>
 			</form>
 

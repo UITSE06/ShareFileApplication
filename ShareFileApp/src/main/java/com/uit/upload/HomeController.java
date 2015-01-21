@@ -7,7 +7,6 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Iterator;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -26,7 +25,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.servlet.ModelAndView;
 
 import DataTranferObject.FileDTO;
@@ -215,12 +213,11 @@ public class HomeController {
 
 	@RequestMapping(value = "/UploadFile", method = RequestMethod.POST)
 	public ModelAndView upload(HttpServletResponse response,
-			MultipartHttpServletRequest request,
+			@RequestParam(value = "myfile") MultipartFile file,
 			HttpSession session) throws ServletException, IOException {
 		logger.info("begin upload");
-		// process only when file is not empty
 		
-		MultipartFile file = request.getFile("myfile");
+		// process only when file is not empty
 		if (!file.isEmpty()) {
 			
 			try {
@@ -295,7 +292,7 @@ public class HomeController {
 		return null;
 	}
 	
-	@RequestMapping(value = "/deleteFile", method = RequestMethod.GET)
+	@RequestMapping(value = "/delete", method = RequestMethod.GET)
 	public ModelAndView deleteFile(HttpServletRequest request,
 			HttpServletResponse response, HttpSession session) throws Exception {
 
@@ -310,8 +307,9 @@ public class HomeController {
 			return modelAndView;
 		}	
 		if(serverI.deleteFile(userSession, fileTitle)){
-			
+			logger.info("Deleted file, get list again");
+			modelAndView.setViewName("index");
 		}
-		return null;
+		return modelAndView;
 	}
 }
