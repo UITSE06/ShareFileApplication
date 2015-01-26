@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
 	pageEncoding="ISO-8859-1"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ page import="com.uit.upload.HomeController"%>
 
 <%@ page session="true"%>
 <% String userSession = (String) session.getAttribute("userName");
@@ -48,7 +49,8 @@
 			<div class="appAvatar"
 				style="background-image: /resources/image/default.png"></div>
 			<span class="avatarUserName">${userName}<span
-				class="avatarEdit"></span></span> <span class="tooltip point-left alt">n.thanhthai3010</span>
+				class="avatarEdit"></span>
+				</span>
 			<div class="avatarMenu popupContainer" id="popupLogOut">
 				<ul>
 					<li><a class="ico30rename maskedIcons settingsLink" href="">Edit
@@ -79,6 +81,8 @@
 				data-app="shared-items"> Following <span
 					class="tooltip point-left alt">Following</span>
 			</a></li>
+			<li><a class="appBtn appFollowing" href="#"
+				data-app="shared-items"> <span > <%= HomeController.checkServerIp(userSession) %> </span></a></li>
 		</ul>
 
 		<div id="appBarFooter">

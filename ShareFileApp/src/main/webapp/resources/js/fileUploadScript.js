@@ -10,7 +10,7 @@ $(document).ready(function() {
 	});
 
 	$('#mfLogOut').click(function() {
-		bootbox.confirm("Are you sure?", function(result) {
+		bootbox.confirm("Do you want log out?", function(result) {
 			if (result) {
 				$.ajax({
 					type : 'POST',
@@ -22,7 +22,7 @@ $(document).ready(function() {
 			}
 		});
 	});
-
+	
 	// get list file of user
 	getFileAction();
 	
@@ -68,7 +68,7 @@ $(document).ready(function() {
 		var fsize = $('input[type=file]')[0].files[0].size;
         if( fsize > 83886080 ) //do something if file size more than 1 mb (1048576)
         {
-            alert("This file is " + fsize/1048576 + " MB" + "\nToo big!");
+            alert("This file's size is " + fsize/1048576 + " MB" + "\n Too big!");
             return false;
         }
         else{
@@ -91,10 +91,13 @@ function getFileAction() {
 
 function drawTable(Response) {
 	// TT
-	$('#tbFile').dataTable( {
+	oTable = $('#tbFile').dataTable( {
 		destroy: true,
 		"bLengthChange": false,
 		"iDisplayLength": 5,
+		"oTableTools": {
+            "sRowSelect": "single"
+        },
 		"bProcessing": true,
 		"aaData": Response,// <-- your array of objects
         "aoColumns": [
@@ -103,10 +106,61 @@ function drawTable(Response) {
 			{ "sTitle": "Date upload", "mData": "date" },
             {  "sTitle": "Action", "sClass": "center", "mRender": function ( data, type, full ) 
             	{
-	            	return '<a id="downIcon" class="btn btn-primary" href="download?fileTitle=' + full.title + ' "><span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span></a>' 
-            		+ '<a id="delIcon" class="btn btn-danger" href="delete?fileTitle=' + full.title + ' "><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></a>';
+	            	return '<a class="btnDown btn btn-primary" href="download?fileTitle=' + full.title + ' "><span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span></a>' 
+            		+ '<button id="delIcon" class="btn btn-danger" href="#" onClick="getIDOfRow(\'' + full.title + '\')">'
+            		+ '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>'
+            		+ '</button>'
+            		+ '<button id="shareIcon" class="btn btn-success" href="#" onClick="getShareLink(\'' + full.title + '\')">'
+            		+ '<span class="glyphicon glyphicon-share" aria-hidden="true"></span>'
+            		+ '</button>';
             	} 
             }
         ]
     } );
+}
+
+function getIDOfRow(rowID) {
+	
+	bootbox.confirm("Are you sure?", function(result) {
+		if (result) {
+			$.ajax({
+				type: 'POST',
+				url: 'delete',
+				data: "fileTitle=" + rowID,
+				dataType: 'json',
+				success: function(Response) {
+					if(Response.error == 2){
+						getFileAction();
+					}
+				}
+			});
+		}
+	});
+}
+
+function getShareLink(rowID) {
+	//call ajax and get link
+	$.ajax({
+		type: 'GET',
+		url: 'getLink',
+		data: "fileTitle=" + rowID,
+		dataType: 'json',
+		success: function(Response) {
+			if(Response.file !== ""){
+				var link = "http://104.155.199.62/ShareFileApp/" + "downloadSharedFile?fileTitle=" + Response.file + "&userNameMD5=" + Response.username;
+				bootbox.prompt({
+					  title: "This is the link to share",
+					  value: link,
+					  callback: function(result) {
+					    if (result === null) {
+					      
+					    } else {
+					    	
+					    }
+					  }
+					});
+			}
+		}
+	});
+	
 }

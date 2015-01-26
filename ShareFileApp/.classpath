@@ -26,5 +26,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry exported="true" kind="lib" path="E:/Dropbox/HocKi7/XuLyPhanBo/1DoAnCuoiKy/ShareFileApplication/ShareFileApp/commons-fileupload-1.3.1.jar"/>
+	<classpathentry kind="lib" path="com.sun.mail_1.4.2.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

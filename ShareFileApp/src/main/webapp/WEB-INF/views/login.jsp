@@ -34,8 +34,8 @@
     <label for="inputPassword3" class="col-sm-2 control-label">Password</label>
     <div class="col-sm-10">
       <input type="password" class="form-control" id="inputPassword3" placeholder="Password" name="pass" >
-      <h2>Active Sessions: <%= MySessionCounter.getActiveSessions() %></h2>
-      
+      <h4>Active Sessions: <%= MySessionCounter.getActiveSessions() %></h4>
+      <h4>Tomcat's Ip: <%= CheckIpTool.getIp() %></h4>
     </div>
   </div>
   <div class="form-group">

@@ -53,6 +53,6 @@ span.glyphicon-remove, span.glyphicon-cloud-download{
     font-size: 1.0em;
 }
 
-#delIcon{
+#delIcon, #shareIcon{
  margin-left: 10px;
 }

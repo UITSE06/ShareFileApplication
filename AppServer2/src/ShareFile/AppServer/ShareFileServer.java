@@ -1,7 +1,6 @@
 package ShareFile.AppServer;
 
 import java.rmi.RemoteException;
-
 import java.sql.SQLException;
 
 import appServerHandling.*;
@@ -13,11 +12,14 @@ public class ShareFileServer
     public static void main( String[] args )
     {
         System.out.println( "Hello World!" );
-        ConnectDatatbase con = new ConnectDatatbase();
         try {
-			Connection connect = con.CreateConnect();
+        	//System.out.println("\n---------------------------------------------");
+    		//System.out.println("ContextInitialized Method has been Called......");
+        	BoneCPConnection.configrureBoneCP();
+        	//System.out.println("---------------------------------------------\n");
+        	Connection connect = BoneCPConnection.getBoneCPConnection().getConnection();
 			if(connect != null){
-				System.out.println( "connected to MySQL database!" );
+				System.out.println( "connected to MySQL database by BoneCP!" );
 			}
 			connect.close();
 		} catch (SQLException e) {
